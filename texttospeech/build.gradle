@@ -11,6 +11,7 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    sourceSets.main.jniLibs.srcDirs = ['src/main/libs'];
     buildTypes {
         release {
             minifyEnabled false
@@ -22,4 +23,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.0.0'
+    compile files('src/main/libs/Msc.jar')
+    compile files('src/main/libs/Sunflower.jar')
 }
