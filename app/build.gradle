@@ -24,4 +24,6 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile files('src/main/libs/readface.jar')
+    compile files('src/main/libs/unity-classes.jar')
 }

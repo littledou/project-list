@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="readface">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/src/main/libs/readface.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
