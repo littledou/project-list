@@ -11,7 +11,19 @@ android {
         versionCode 1
         versionName "1.0"
     }
-
+//    sourceSets {
+//        main {
+//            manifest.srcFile 'AndroidManifest.xml'
+//            java.srcDirs = ['src']
+//            resources.srcDirs = ['src']
+//            aidl.srcDirs = ['src']
+//            renderscript.srcDirs = ['src']
+//            res.srcDirs = ['res']
+//            assets.srcDirs = ['assets']
+//        }
+//
+//        instrumentTest.setRoot('tests')
+//    }
     sourceSets.main.jniLibs.srcDirs = ['src/main/libs'];
 
     buildTypes {
