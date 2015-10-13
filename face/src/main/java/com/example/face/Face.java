@@ -3,16 +3,14 @@ package com.example.face;
 import android.content.Context;
 import android.widget.RelativeLayout;
 
-import com.example.util.FaceUtil;
-
 /**
  * Face 包括腮红2，眉毛2，眼睛2，嘴巴1
  */
 public class Face extends RelativeLayout {
 
     private Blush blushLeft, blushRight;
-    private Brow browLeft, browRight;
-    private Eye eyeLeft, eyeRight;
+    private Brow brow;
+    private Eye eye;
     private Mouth mouth;
 
     private float radio = 1f;
@@ -30,16 +28,12 @@ public class Face extends RelativeLayout {
         addView(blushLeft);
         addView(blushRight);
 
-        eyeLeft = new Eye(context, radio,BasePart.LEFT);
-        eyeRight = new Eye(context, radio,BasePart.RIGHT);
-        addView(eyeLeft);
-        addView(eyeRight);
+        eye = new Eye(context, radio);
+        addView(eye);
 
 
-        browLeft = new Brow(context, radio,BasePart.LEFT);
-        browRight = new Brow(context, radio,BasePart.RIGHT);
-        addView(browLeft);
-        addView(browRight);
+        brow = new Brow(context, radio);
+        addView(brow);
 
         mouth = new Mouth(context,radio);
         addView(mouth);
@@ -52,31 +46,41 @@ public class Face extends RelativeLayout {
 
         blushLeft.layout((int) (72 * radio), (int) (360 * radio), (int) (372 * radio), (int) (560 * radio));
         blushRight.layout((int) (708 * radio), (int) (360 * radio), (int) (1008 * radio), (int) (560 * radio));
-        eyeLeft.layout((int)(150*radio), (int)(175*radio), (int)(444*radio), (int)(469*radio));
-        eyeRight.layout((int) (640 * radio), (int) (175 * radio), (int) (934 * radio), (int) (469 * radio));
 
-        browLeft.layout((int) (110 * radio), (int) (33 * radio), (int) (480 * radio), (int) (164 * radio));
-        browRight.layout((int)(602*radio), (int)(33*radio), (int)(972*radio), (int)(164*radio));
+        eye.layout((int) (150 * radio), (int) (175 * radio), (int) (934 * radio), (int) (469 * radio));
+
+
+        brow.layout((int) (110 * radio), (int) (33 * radio), (int) (972 * radio), (int) (164 * radio));
 
         mouth.layout((int) (370 * radio), (int) (512 * radio), (int) (710 * radio), (int) (710 * radio));
     }
 
 
-    public void startNomalSpeak(){
-        mouth.startNomalSpeak();
+    public void action0(){//正常表情值
+
     }
 
-    public void stopNomalSpeak(){
-        mouth.stopNomalSpeak();
+    public void action1(){//眨眼睛1：刚启动系统
+        cleanAction();
+        eye.startSight();
+        mouth.setMouthImage(R.drawable.mouth_smile2);
+    }
+    public void action2(){//笑1
+        cleanAction();
+        mouth.startSpeak(100,new int[]{
+                R.drawable.mouth0
+                , R.drawable.mouth_smile1
+                , R.drawable.mouth_smile2
+                , R.drawable.mouth_smile1
+                , R.drawable.mouth0
+        });
     }
 
-    public void startSight(){
-        eyeRight.startSight();
-        eyeLeft.startSight();
+    private void cleanAction(){//清除处理事件
+        mouth.stopSpeak();
+        eye.stopSight();
+        eye.stopEyeShock();
     }
-    public void stopSight(){
-        eyeRight.stopSight();
-        eyeLeft.stopSight();
-    }
+
 
 }

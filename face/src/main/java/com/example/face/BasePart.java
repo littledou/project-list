@@ -10,7 +10,6 @@ import android.view.View;
  * @author dou
  */
 public class BasePart extends View{
-	protected int speed;
 
 	protected Paint mPaint;
 	protected Rect mRect;
@@ -25,13 +24,5 @@ public class BasePart extends View{
 		mPaint.setAntiAlias(true);
 		mPaint.setStrokeWidth(1.0f);
 		mRect = new Rect();
-	}
-
-	public int getSpeed() {
-		return speed;
-	}
-
-	public void setSpeed(int speed) {
-		this.speed = speed;
 	}
 }
