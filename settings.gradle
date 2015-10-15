@@ -1,1 +1,1 @@
-include ':app', ':custom_demo', ':texttospeech', ':face'
+include ':app', ':custom_demo', ':texttospeech', ':cafeanim'

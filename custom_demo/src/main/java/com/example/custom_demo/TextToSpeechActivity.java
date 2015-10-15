@@ -17,8 +17,8 @@ public class TextToSpeechActivity extends Activity implements TextToSpeech.OnIni
     private TextToSpeech tts;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
+        super.onCreate(savedInstanceState);
         Intent checkIntent = new Intent();
 
         checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);

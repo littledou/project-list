@@ -15,3 +15,5 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+#讯飞lib proguard
+#-keep class com.iflytek.**{*;}
