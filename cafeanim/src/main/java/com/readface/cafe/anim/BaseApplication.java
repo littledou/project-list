@@ -13,5 +13,6 @@ public class BaseApplication extends Application {
     public void onCreate() {
         SpeechUtility.createUtility(BaseApplication.this, "appid=561e1035");
         super.onCreate();
+
     }
 }

@@ -3,11 +3,9 @@ package com.readface.cafe.anim;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.iflytek.cloud.ErrorCode;
@@ -19,9 +17,13 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.readface.cafe.utils.AsyncTaskExecutor;
+import com.readface.cafe.utils.FaceUtil;
+import com.readface.cafe.utils.HttpUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -29,20 +31,21 @@ import java.util.LinkedHashMap;
 
 public class MainActivity extends Activity {
 
+
+    private final String LOG = "MainActivity";
     private Context mContext;
     private SpeechRecognizer mIat;
     private SpeechSynthesizer mTts;
 
     private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
         RelativeLayout parent = new RelativeLayout(this);
-
         parent.setLayoutParams(new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         parent.setBackgroundColor(Color.BLACK);
-
         int screenW = FaceUtil.getScreenWidth(this);
         float radio = screenW / 1080f;
         final Face face = new Face(this, radio);
@@ -51,63 +54,58 @@ public class MainActivity extends Activity {
         face.setLayoutParams(layoutParams);
         face.setBackgroundColor(Color.WHITE);
         parent.addView(face);
-
         setContentView(parent);
 
+        initActivate();
 
-        LinearLayout testList = new LinearLayout(this);
-        testList.setOrientation(LinearLayout.VERTICAL);
-        Button startSpeak = new Button(this);
-        startSpeak.setText("action1");
-        startSpeak.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                face.action1();
+    }
+
+    /**
+     * 激活设备
+     */
+    private void initActivate() {
+        AsyncTaskExecutor.executeConcurrently(new ActiveTask());
+    }
+
+    private class ActiveTask extends AsyncTask<String, String, String> {
+
+
+        @Override
+        protected String doInBackground(String... params) {
+            String result = null;
+            try {
+                JSONStringer js = new JSONStringer();
+                js.object();
+                js.key("robot");
+                js.object();
+                js.key("uuid").value(FaceUtil.getDeviceId(mContext));
+                js.endObject();
+                js.endObject();
+                result = HttpUtil.doGet("http://shangjieba.fashionyear.net/v1/actions/next/");
+//                result = HttpUtil.doPost(AppUrl.postActivate(), HttpParams.getEntity(js.toString()), HttpParams.getHead());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
 
-        testList.addView(startSpeak);
-        Button stopSpeak = new Button(this);
-        stopSpeak.setText("action2");
-        stopSpeak.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                face.action2();
-            }
-        });
-        testList.addView(stopSpeak);
+            return result;
+        }
 
-        Button startSight = new Button(this);
-        startSight.setText("action3");
-        startSight.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                face.action3();
-            }
-        });
-        testList.addView(startSight);
-
-        Button startShock = new Button(this);
-        startShock.setText("action4");
-        startShock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                face.action4();
-                startIATService();
-            }
-        });
-        testList.addView(startShock);
-
-
-        parent.addView(testList);
-
-        mIat = SpeechRecognizer.createRecognizer(mContext, mInitListener);
-        mTts = SpeechSynthesizer.createSynthesizer(mContext,mInitListener);
+        @Override
+        protected void onPostExecute(String s) {
+            Log.d(LOG, s);
+        }
     }
 
     //TODO 音频服务
+    private void initTTS() {
+        mIat = SpeechRecognizer.createRecognizer(mContext, mInitListener);//听
+        mTts = SpeechSynthesizer.createSynthesizer(mContext, mInitListener);//说
+    }
 
-    public void startIATService(){//IAT
+    /**
+     * 听
+     */
+    private void startIATService() {//IAT
         mIat.setParameter(SpeechConstant.PARAMS, null);
         mIat.setParameter(SpeechConstant.DOMAIN, "iat");
         mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
@@ -117,9 +115,21 @@ public class MainActivity extends Activity {
         mIat.setParameter(SpeechConstant.VAD_BOS, "4000");
         mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
         mIat.setParameter(SpeechConstant.ASR_PTT, "1");
-
-
         mIat.startListening(mRecoListener);
+    }
+
+    /**
+     * 说
+     */
+    private void startTTSService(String text) {
+        mTts.setParameter(SpeechConstant.PARAMS, null);
+        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
+        mTts.setParameter(SpeechConstant.VOICE_NAME, "xiaoyan");
+        mTts.setParameter(SpeechConstant.SPEED, "50");//语速
+        mTts.setParameter(SpeechConstant.SPEED, "50");//语调
+        mTts.setParameter(SpeechConstant.VOLUME, "50");//音量
+        mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS, "true");
+        mTts.startSpeaking(text, mTtsListener);
     }
 
     private RecognizerListener mRecoListener = new RecognizerListener() {
@@ -131,31 +141,31 @@ public class MainActivity extends Activity {
         @Override
         public void onBeginOfSpeech() {
 
-            Log.d("SpeechResult", "start speech");
+            Log.d(LOG, "start speech");
         }
 
         @Override
         public void onEndOfSpeech() {
-            Log.d("SpeechResult", "end speech");
+            Log.d(LOG, "end speech");
 
         }
 
         @Override
         public void onResult(RecognizerResult recognizerResult, boolean b) {
             printResult(recognizerResult);
-            if(b){
+            if (b) {
                 StringBuffer resultBuffer = new StringBuffer();
                 for (String key : mIatResults.keySet()) {
                     resultBuffer.append(mIatResults.get(key));
                 }
                 startTTSService(resultBuffer.toString());
-                Log.d("SpeechResult",resultBuffer.toString());
+                Log.d(LOG, resultBuffer.toString());
             }
         }
 
         @Override
         public void onError(SpeechError speechError) {
-            Log.d("SpeechResult", speechError.getErrorCode()+":"+speechError.getErrorDescription());
+            Log.d(LOG, speechError.getErrorCode() + ":" + speechError.getErrorDescription());
         }
 
         @Override
@@ -167,11 +177,12 @@ public class MainActivity extends Activity {
     private InitListener mInitListener = new InitListener() {
         @Override
         public void onInit(int code) {//初始化音频服务的监听
-            if(code != ErrorCode.SUCCESS){
-                Log.d("SpeechResult","初始化失败：错误码"+code);
+            if (code != ErrorCode.SUCCESS) {
+                Log.d(LOG, "初始化失败：错误码" + code);
             }
         }
     };
+
     private void printResult(RecognizerResult results) {
         String text = JsonParser.parseIatResult(results.getResultString());
 
@@ -186,51 +197,36 @@ public class MainActivity extends Activity {
         mIatResults.put(sn, text);
     }
 
-
-    //TODO TTS
-
-    private void startTTSService(String text){
-        mTts.setParameter(SpeechConstant.PARAMS,null);
-        mTts.setParameter(SpeechConstant.ENGINE_TYPE,SpeechConstant.TYPE_CLOUD);
-        mTts.setParameter(SpeechConstant.VOICE_NAME,"xiaoyan");
-        mTts.setParameter(SpeechConstant.SPEED,"50");//语速
-        mTts.setParameter(SpeechConstant.SPEED,"50");//语调
-        mTts.setParameter(SpeechConstant.VOLUME,"50");//音量
-        mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS,"true");
-        mTts.startSpeaking(text,mTtsListener);
-
-    }
-
     private SynthesizerListener mTtsListener = new SynthesizerListener() {
         @Override
         public void onSpeakBegin() {
-            Log.d("SpeechResult","开始");
+            Log.d(LOG, "开始");
         }
 
         @Override
         public void onBufferProgress(int i, int i1, int i2, String s) {
-            Log.d("SpeechResult","合成进度"+i);
+            Log.d(LOG, "合成进度" + i);
 
         }
 
         @Override
         public void onSpeakPaused() {
-            Log.d("SpeechResult","暂停");
+            Log.d(LOG, "暂停");
         }
 
         @Override
         public void onSpeakResumed() {
-            Log.d("SpeechResult","继续播放");
+            Log.d(LOG, "继续播放");
         }
 
         @Override
         public void onSpeakProgress(int i, int i1, int i2) {
-            Log.d("SpeechResult","播放进度"+i);
+            Log.d(LOG, "播放进度" + i);
         }
 
         @Override
         public void onCompleted(SpeechError speechError) {
-            Log.d("SpeechResult","播放完成");
+            Log.d(LOG, "播放完成");
 
         }
 
