@@ -9,10 +9,12 @@ import com.iflytek.cloud.SpeechUtility;
  */
 public class BaseApplication extends Application {
 
+    public static String token ;
+    public static String emotion="joy";
     @Override
     public void onCreate() {
         SpeechUtility.createUtility(BaseApplication.this, "appid=561e1035");
         super.onCreate();
-
     }
+
 }

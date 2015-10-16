@@ -17,8 +17,10 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.readface.cafe.utils.AppUrl;
 import com.readface.cafe.utils.AsyncTaskExecutor;
 import com.readface.cafe.utils.FaceUtil;
+import com.readface.cafe.utils.HttpParams;
 import com.readface.cafe.utils.HttpUtil;
 
 import org.json.JSONException;
@@ -39,6 +41,8 @@ public class MainActivity extends Activity {
 
     private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
 
+    private Face face;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
@@ -48,7 +52,7 @@ public class MainActivity extends Activity {
         parent.setBackgroundColor(Color.BLACK);
         int screenW = FaceUtil.getScreenWidth(this);
         float radio = screenW / 1080f;
-        final Face face = new Face(this, radio);
+        face = new Face(this, radio);
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenW, (int) (750 * radio));
         layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
         face.setLayoutParams(layoutParams);
@@ -56,45 +60,20 @@ public class MainActivity extends Activity {
         parent.addView(face);
         setContentView(parent);
 
+
+        face.action1();
         initActivate();
 
     }
 
     /**
-     * 激活设备
+     * 激活设备 获取token
      */
     private void initActivate() {
         AsyncTaskExecutor.executeConcurrently(new ActiveTask());
+
     }
 
-    private class ActiveTask extends AsyncTask<String, String, String> {
-
-
-        @Override
-        protected String doInBackground(String... params) {
-            String result = null;
-            try {
-                JSONStringer js = new JSONStringer();
-                js.object();
-                js.key("robot");
-                js.object();
-                js.key("uuid").value(FaceUtil.getDeviceId(mContext));
-                js.endObject();
-                js.endObject();
-                result = HttpUtil.doGet("http://shangjieba.fashionyear.net/v1/actions/next/");
-//                result = HttpUtil.doPost(AppUrl.postActivate(), HttpParams.getEntity(js.toString()), HttpParams.getHead());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            Log.d(LOG, s);
-        }
-    }
 
     //TODO 音频服务
     private void initTTS() {
@@ -105,14 +84,14 @@ public class MainActivity extends Activity {
     /**
      * 听
      */
-    private void startIATService() {//IAT
+    private void startIATService() {//IAT 启动听服务位置，1：应用启动2：没听到3：说结束
         mIat.setParameter(SpeechConstant.PARAMS, null);
         mIat.setParameter(SpeechConstant.DOMAIN, "iat");
         mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
         mIat.setParameter(SpeechConstant.ACCENT, "mandarin");
         mIat.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
         mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
-        mIat.setParameter(SpeechConstant.VAD_BOS, "4000");
+        mIat.setParameter(SpeechConstant.VAD_BOS, "6000");
         mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
         mIat.setParameter(SpeechConstant.ASR_PTT, "1");
         mIat.startListening(mRecoListener);
@@ -152,20 +131,30 @@ public class MainActivity extends Activity {
 
         @Override
         public void onResult(RecognizerResult recognizerResult, boolean b) {
+
+
             printResult(recognizerResult);
             if (b) {
                 StringBuffer resultBuffer = new StringBuffer();
                 for (String key : mIatResults.keySet()) {
                     resultBuffer.append(mIatResults.get(key));
                 }
-                startTTSService(resultBuffer.toString());
-                Log.d(LOG, resultBuffer.toString());
+                //TODO 处理将录入的语音
+
+                AsyncTaskExecutor.executeConcurrently(new NextTask(), resultBuffer.toString(),"joy");
+
+                Log.d(LOG, "over = " + resultBuffer.toString());
+
             }
         }
 
         @Override
         public void onError(SpeechError speechError) {
             Log.d(LOG, speechError.getErrorCode() + ":" + speechError.getErrorDescription());
+//            if (speechError.getErrorCode() == 10118) {
+
+                startIATService();
+//            }
         }
 
         @Override
@@ -201,6 +190,7 @@ public class MainActivity extends Activity {
         @Override
         public void onSpeakBegin() {
             Log.d(LOG, "开始");
+            face.action3();
         }
 
         @Override
@@ -220,14 +210,13 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public void onSpeakProgress(int i, int i1, int i2) {
-            Log.d(LOG, "播放进度" + i);
-        }
+        public void onSpeakProgress(int i, int i1, int i2) {}
 
         @Override
         public void onCompleted(SpeechError speechError) {
             Log.d(LOG, "播放完成");
-
+            startIATService();
+            face.action0();
         }
 
         @Override
@@ -235,4 +224,83 @@ public class MainActivity extends Activity {
 
         }
     };
+
+    private class NextTask extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String result = null;
+            try {
+                result = HttpUtil.doGet(AppUrl.getNext(params[0], params[1]));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            if(s!=null){
+                try{
+                    Log.d(LOG, "返回结果----" +s);
+
+                    JSONObject result = new JSONObject(s);
+                    String voice = result.getJSONObject("action").getString("voice");
+                    startTTSService("解析成功");
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private class ActiveTask extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String result = null;
+            try {
+                JSONStringer js = new JSONStringer();
+                js.object();
+                js.key("robot");
+                js.object();
+                js.key("uuid").value(FaceUtil.getDeviceId(mContext));
+                js.endObject();
+                js.endObject();
+                result = HttpUtil.doPost(AppUrl.postActivate(), HttpParams.getEntity(js.toString()), HttpParams.getHead());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.d(LOG, s);
+            if (s != null) {//设备激活成功
+                try {
+                    BaseApplication.token = new JSONObject(s).getString("token");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                initTTS();//开启音频服务
+                //启动开场白
+                startTTSService("嗨，，我是你的好朋友 --小白!");
+
+
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //退出时释放链接
+        mIat.stopListening();
+        mIat.cancel();
+        mIat.destroy();
+        mTts.stopSpeaking();
+        mTts.destroy();
+    }
 }
