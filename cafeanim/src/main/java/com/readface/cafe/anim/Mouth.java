@@ -20,10 +20,6 @@ public class Mouth extends BasePart {
     private int[] speak_arr;
     private int speed;
 
-    public enum ActionType{
-
-    }
-
     public Mouth(Context context, float radio) {
         super(context);
 
@@ -52,7 +48,7 @@ public class Mouth extends BasePart {
     }
 
     /**
-     * 返回正常值
+     * 返回正常
      */
     public void stopSpeak() {
         if (!start) return;
@@ -82,7 +78,6 @@ public class Mouth extends BasePart {
             mouthImage = speak_arr[mouthcount];
             postInvalidate();
             handler.postDelayed(mRunnable, speed);
-
         }
     };
 

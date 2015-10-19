@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.RelativeLayout;
 
+import com.android.volley.VolleyError;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.RecognizerListener;
@@ -22,6 +23,7 @@ import com.readface.cafe.utils.AsyncTaskExecutor;
 import com.readface.cafe.utils.FaceUtil;
 import com.readface.cafe.utils.HttpParams;
 import com.readface.cafe.utils.HttpUtil;
+import com.readface.cafe.utils.VolleyHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,10 +61,21 @@ public class MainActivity extends Activity {
         face.setBackgroundColor(Color.WHITE);
         parent.addView(face);
         setContentView(parent);
-
-
         face.action1();
-        initActivate();
+
+        VolleyHelper.doGet("https://www.baidu.com/", new VolleyHelper.HelpListener() {
+            @Override
+            public void onResponse(String response) {
+                Log.d(LOG,response);
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+
+            }
+        });
+
+//        initActivate();
 
     }
 
@@ -141,7 +154,7 @@ public class MainActivity extends Activity {
                 }
                 //TODO 处理将录入的语音
 
-                AsyncTaskExecutor.executeConcurrently(new NextTask(), resultBuffer.toString(),"joy");
+                AsyncTaskExecutor.executeConcurrently(new NextTask(), resultBuffer.toString(), "joy");
 
                 Log.d(LOG, "over = " + resultBuffer.toString());
 
@@ -153,7 +166,7 @@ public class MainActivity extends Activity {
             Log.d(LOG, speechError.getErrorCode() + ":" + speechError.getErrorDescription());
 //            if (speechError.getErrorCode() == 10118) {
 
-                startIATService();
+            startIATService();
 //            }
         }
 
@@ -190,7 +203,6 @@ public class MainActivity extends Activity {
         @Override
         public void onSpeakBegin() {
             Log.d(LOG, "开始");
-            face.action3();
         }
 
         @Override
@@ -210,13 +222,13 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public void onSpeakProgress(int i, int i1, int i2) {}
+        public void onSpeakProgress(int i, int i1, int i2) {
+        }
 
         @Override
         public void onCompleted(SpeechError speechError) {
             Log.d(LOG, "播放完成");
             startIATService();
-            face.action0();
         }
 
         @Override
@@ -240,14 +252,14 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String s) {
-            if(s!=null){
-                try{
-                    Log.d(LOG, "返回结果----" +s);
+            if (s != null) {
+                try {
+                    Log.d(LOG, "返回结果----" + s);
 
                     JSONObject result = new JSONObject(s);
                     String voice = result.getJSONObject("action").getString("voice");
-                    startTTSService("解析成功");
-                }catch (Exception e){
+                    startTTSService(voice);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -288,7 +300,6 @@ public class MainActivity extends Activity {
                 //启动开场白
                 startTTSService("嗨，，我是你的好朋友 --小白!");
 
-
             }
         }
     }
@@ -297,10 +308,14 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         //退出时释放链接
-        mIat.stopListening();
-        mIat.cancel();
-        mIat.destroy();
-        mTts.stopSpeaking();
-        mTts.destroy();
+        if (mIat != null) {
+            mIat.stopListening();
+            mIat.cancel();
+            mIat.destroy();
+        }
+        if (mTts != null) {
+            mTts.stopSpeaking();
+            mTts.destroy();
+        }
     }
 }
