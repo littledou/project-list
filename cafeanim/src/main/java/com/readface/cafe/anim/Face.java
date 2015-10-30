@@ -4,7 +4,7 @@ import android.content.Context;
 import android.widget.RelativeLayout;
 
 /**
- * Face 包括腮红2，眉毛2，眼睛2，嘴巴1
+ * Face 包括腮红1，眉毛1，眼睛1，嘴巴1
  */
 public class Face extends RelativeLayout {
 
@@ -48,7 +48,6 @@ public class Face extends RelativeLayout {
         blushRight.layout((int) (708 * radio), (int) (360 * radio), (int) (1008 * radio), (int) (560 * radio));
 
         eye.layout((int) (150 * radio), (int) (175 * radio), (int) (934 * radio), (int) (469 * radio));
-
 
         brow.layout((int) (110 * radio), (int) (33 * radio), (int) (972 * radio), (int) (164 * radio));
 

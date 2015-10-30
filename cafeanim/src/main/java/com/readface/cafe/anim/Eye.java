@@ -95,7 +95,7 @@ public class Eye extends BasePart {
         handler.removeCallbacks(mRunnable);
         isEyeShock = false;
         eyeShockRange = 0;
-        postInvalidate();
+        invalidate();
     }
 
     //一个眨眼动作的完整描述
@@ -112,7 +112,7 @@ public class Eye extends BasePart {
         isEyeSight = false;
         sightCount = 0;
         sightImage = eyeSight[0];
-        postInvalidate();
+        invalidate();
     }
 
 
@@ -124,23 +124,23 @@ public class Eye extends BasePart {
                     eyeShockRange = 2;
                 }
                 eyeShockRange = -eyeShockRange;
-                postInvalidate();
-                handler.postDelayed(mRunnable,100);
+                invalidate();
+                handler.postDelayed(mRunnable,60);
             } else if(isEyeSight){
                 if (sightCount == eyeSight.length * 3) {
                     sightImage = eyeSight[0];
-                    postInvalidate();
+                    invalidate();
                     sightCount = 0;
                     handler.postDelayed(mRunnable,2000);
                 }else {
                     sightImage = eyeSight[sightCount % eyeSight.length];
-                    postInvalidate();
+                    invalidate();
                     sightCount++;
 
                     if(sightCount == eyeSight.length * 2 + 1){
                         handler.postDelayed(mRunnable,300);
                     }else{
-                        handler.postDelayed(mRunnable,50);
+                        handler.postDelayed(mRunnable,20);
                     }
                 }
             }

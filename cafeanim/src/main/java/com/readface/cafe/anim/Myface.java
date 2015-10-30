@@ -167,7 +167,6 @@ public class Myface extends SurfaceView implements SurfaceHolder.Callback {
             } else if (isEyeSight) {
                 if (sightCount == eyeSight.length * 3) {
                     sightImage = eyeSight[0];
-                    postInvalidate();
                     sightCount = 0;
                     handler.postDelayed(eye, 2000);
                 } else {
