@@ -7,6 +7,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 眼睛的定义 294-784
  *
@@ -31,6 +34,9 @@ public class Eye extends BasePart {
             , R.drawable.eye_sight1
             , R.drawable.eye_sight0
     };
+
+    private List<Integer> open = new ArrayList<>();
+    private List<Integer> close = new ArrayList<>();
     private int sightImage;
     private int sightCount = 0;
 
@@ -91,11 +97,11 @@ public class Eye extends BasePart {
     }
 
     public void stopEyeShock() {
-        if(!isEyeShock)return;
+        if (!isEyeShock) return;
         handler.removeCallbacks(mRunnable);
         isEyeShock = false;
         eyeShockRange = 0;
-        invalidate();
+        postInvalidate();
     }
 
     //一个眨眼动作的完整描述
@@ -107,40 +113,47 @@ public class Eye extends BasePart {
     }
 
     public void stopSight() {//停止眨眼
-        if(!isEyeSight)return;
+        if (!isEyeSight) return;
         handler.removeCallbacks(mRunnable);
         isEyeSight = false;
         sightCount = 0;
         sightImage = eyeSight[0];
-        invalidate();
+        postInvalidate();
     }
 
+    public void open() {
+
+    }
+
+    public void close() {
+
+    }
 
     private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
-            if(isEyeShock){
+            if (isEyeShock) {
                 if (eyeShockRange == 0) {
                     eyeShockRange = 2;
                 }
                 eyeShockRange = -eyeShockRange;
-                invalidate();
-                handler.postDelayed(mRunnable,60);
-            } else if(isEyeSight){
+                postInvalidate();
+                handler.postDelayed(mRunnable, 60);
+            } else if (isEyeSight) {
                 if (sightCount == eyeSight.length * 3) {
                     sightImage = eyeSight[0];
-                    invalidate();
+                    postInvalidate();
                     sightCount = 0;
-                    handler.postDelayed(mRunnable,2000);
-                }else {
+                    handler.postDelayed(mRunnable, 2000);
+                } else {
                     sightImage = eyeSight[sightCount % eyeSight.length];
-                    invalidate();
+                    postInvalidate();
                     sightCount++;
 
-                    if(sightCount == eyeSight.length * 2 + 1){
-                        handler.postDelayed(mRunnable,300);
-                    }else{
-                        handler.postDelayed(mRunnable,20);
+                    if (sightCount == eyeSight.length * 2 + 1) {
+                        handler.postDelayed(mRunnable, 300);
+                    } else {
+                        handler.postDelayed(mRunnable, 20);
                     }
                 }
             }

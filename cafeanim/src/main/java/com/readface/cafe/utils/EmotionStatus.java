@@ -13,7 +13,7 @@ import mobile.AUDetection.YMFace;
  */
 public class EmotionStatus {
 
-    private static final int count = 4;
+    private static final int count = 10;
     public static final String[] emotion = {
             "joy",
             "sad",
@@ -23,7 +23,17 @@ public class EmotionStatus {
             "disg",
             "nomal"
     };
-
+    public static Map<String, Integer> qualEmo = new HashMap() {
+        {
+            put(emotion[0], 0);
+            put(emotion[1], 1);
+            put(emotion[2], 2);
+            put(emotion[3], 3);
+            put(emotion[4], 4);
+            put(emotion[5], 5);
+            put(emotion[6], 6);
+        }
+    };
     private static List<YMFace> faces = new ArrayList<>();
 
     public static void addFace(YMFace face) {
@@ -39,7 +49,7 @@ public class EmotionStatus {
         return emotion[countPosition()];
     }
 
-    public static double resultMouth(){
+    public static double resultMouth() {
         if (faces.size() < count) {
             return 0;
         }
@@ -49,6 +59,7 @@ public class EmotionStatus {
         }
         return isOffest(tar);
     }
+
     private static double isOffest(int[] target) {
 
         int nom = 0;
@@ -58,9 +69,9 @@ public class EmotionStatus {
         nom = nom / target.length;//平均数
         int vari = 0;
         for (int cur : target) {
-            vari+=(cur-nom)*(cur-nom);
+            vari += (cur - nom) * (cur - nom);
         }
-        vari = vari/target.length;//方差
+        vari = vari / target.length;//方差
         double stand = Math.sqrt(vari);//标准差
         return stand;
     }

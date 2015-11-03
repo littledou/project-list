@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">动画</string>
+    <string name="create_nomal">呜呜，你不告诉我你叫什么名字，那我就叫你小朋友了哦</string>
 </resources>

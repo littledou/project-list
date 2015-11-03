@@ -84,7 +84,7 @@ public class VolleyHelper {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().token);
+                heads.put("token", BaseApplication.getIntence().getToken());
                 return heads;
             }
         });
@@ -121,7 +121,7 @@ public class VolleyHelper {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().token);
+                heads.put("token", BaseApplication.getIntence().getToken());
                 return heads;
             }
         });
@@ -157,7 +157,7 @@ public class VolleyHelper {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().token);
+                heads.put("token", BaseApplication.getIntence().getToken());
                 return heads;
             }
         });

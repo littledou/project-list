@@ -133,17 +133,16 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         VolleyHelper.doPostForToken(new VolleyHelper.HelpListener() {
             @Override
             public void onResponse(String s) {
-                Log.d(TAG, s);
                 if (s != null) {//设备激活成功
-                    countDesc("设备激活成功,开启语音服务,面部识别功能");
+                    countDesc("设备激活成功,开启语音服务,面部识别功能" + s);
                     try {
-                        BaseApplication.getIntence().token = new JSONObject(s).getString("token");
+                        BaseApplication.getIntence().setToken(new JSONObject(s).getString("token"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                     initTTS();//开启音频服务
                     initFaceDetector();
-                    startTTSService("我是小白!");
+                    startTTSService("hi , 我是小白!");
                     MStatus = StatusType.NomalSpeak;
                     //启动开场白
                 }
@@ -259,7 +258,7 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
                         break;
                     case CreatePerson://认识这个人，，确定名字
                         MStatus = StatusType.NomalSpeak;
-                        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().id)
+                        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().getId())
                                 , voice
                                 , new VolleyHelper.HelpListener() {
                             @Override
@@ -292,18 +291,23 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         public void onError(SpeechError speechError) {
             countDesc("Listen error --" + speechError.getErrorDescription());
             if (!mTts.isSpeaking()) {
-                if (MStatus == StatusType.CreatePerson) {//在询问名字的时候不回答
+                switch (MStatus) {
+                    case CreatePerson:
+                        if (count_speak_number >= 1) {
+                            startTTSService("呜呜，你都不告诉我你叫什么名字，那我以后就叫你小朋友了哦");
+                            MStatus = StatusType.NomalSpeak;
+                            face.action4();
+                        } else {
+                            startTTSService("你好啊，我叫小白，你叫什么名字");
+                            count_speak_number++;
+                        }
+                        break;
 
-                    if (count_speak_number >= 1) {
-                        startTTSService("呜呜，你都不告诉我你叫什么名字，那我以后就叫你小朋友了哦");
-                        MStatus = StatusType.NomalSpeak;
-                    } else {
-                        startTTSService("你好啊，我叫小白，你叫什么名字");
-                        count_speak_number++;
-                    }
-                } else {
-                    startIATService();
+                    default:
+                        startIATService();
+                        break;
                 }
+
             }
         }
 
@@ -367,9 +371,8 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
 
         @Override
         public void onCompleted(SpeechError speechError) {
-            Log.d(TAG, "播放完成");
-            countDesc("speak over");
-            face.action0();
+            countDesc("speak complete");
+            face.stopSpeak();
             startIATService();
         }
 
@@ -423,18 +426,20 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
                         countDesc(s);
                         try {
                             JSONObject result = new JSONObject(s);
-                            BaseApplication.getIntence().id = result.getJSONObject("person").getString("id");
+                            BaseApplication.getIntence().setId(result.getJSONObject("person").getString("id"));
                             String voice = result.getJSONObject("action").getString("voice");
 
-                            if (result.getJSONObject("person").getBoolean("recognized")) {//1：熟悉的人
+                            if (result.getJSONObject("person").getBoolean("recognized")) {
+                                //1：熟悉的人
                                 countDesc("检测结果:--认识");
                                 MStatus = StatusType.NomalSpeak;
                                 startTTSService(voice);
                             } else {
                                 //2: 陌生人 创建人物 start voice:你好啊，我是你的新朋友，小白，请问你叫什么名字
-                                countDesc("检测结果:--不认识");
+                                countDesc("检测结果:--不认识，开始眨眼");
                                 MStatus = StatusType.CreatePerson;
                                 startTTSService(voice);
+                                face.action1();
                             }
 
 
@@ -456,7 +461,7 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         //保存最近的几面部信息用于计算当前用户的情绪状态变化
         EmotionStatus.addFace(ymFace);
 
-        countDesc("检测到人脸 嘴部离散度"+EmotionStatus.resultMouth());
+        countDesc("检测到人脸 嘴部离散度" + EmotionStatus.resultMouth());
     }
 
     @Override
