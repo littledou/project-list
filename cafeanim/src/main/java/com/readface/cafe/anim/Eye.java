@@ -37,7 +37,7 @@ public class Eye extends BasePart {
 
     private List<Integer> open = new ArrayList<>();
     private List<Integer> close = new ArrayList<>();
-    private int sightImage;
+    private int sightImage1, sightImage2;
     private int sightCount = 0;
 
     private Rect mRect1;
@@ -57,7 +57,8 @@ public class Eye extends BasePart {
         mRect1.bottom = (int) (294 * radio);
 
         this.radio = radio;
-        sightImage = eyeSight[0];
+        sightImage1 = eyeSight[0];
+        sightImage2 = eyeSight[0];
     }
 
     @Override
@@ -79,9 +80,10 @@ public class Eye extends BasePart {
 
         //		//眼帘
         if (isEyeSight) {
-            Bitmap eye = BitmapFactory.decodeResource(getResources(), sightImage);
-            canvas.drawBitmap(eye, null, mRect, mPaint);//left sight
-            canvas.drawBitmap(eye, null, mRect1, mPaint);
+            Bitmap eye1 = BitmapFactory.decodeResource(getResources(), sightImage1);
+            canvas.drawBitmap(eye1, null, mRect, mPaint);//left sight
+            Bitmap eye2 = BitmapFactory.decodeResource(getResources(), sightImage2);
+            canvas.drawBitmap(eye2, null, mRect1, mPaint);
         }
     }
 
@@ -117,7 +119,8 @@ public class Eye extends BasePart {
         handler.removeCallbacks(mRunnable);
         isEyeSight = false;
         sightCount = 0;
-        sightImage = eyeSight[0];
+        sightImage1 = eyeSight[0];
+        sightImage2 = eyeSight[0];
         postInvalidate();
     }
 
@@ -141,19 +144,21 @@ public class Eye extends BasePart {
                 handler.postDelayed(mRunnable, 60);
             } else if (isEyeSight) {
                 if (sightCount == eyeSight.length * 3) {
-                    sightImage = eyeSight[0];
+                    sightImage1 = eyeSight[0];
+                    sightImage2 = eyeSight[0];
                     postInvalidate();
                     sightCount = 0;
                     handler.postDelayed(mRunnable, 2000);
                 } else {
-                    sightImage = eyeSight[sightCount % eyeSight.length];
+                    sightImage1 = eyeSight[sightCount % eyeSight.length];
+                    sightImage2 = eyeSight[sightCount % eyeSight.length];
                     postInvalidate();
                     sightCount++;
 
                     if (sightCount == eyeSight.length * 2 + 1) {
                         handler.postDelayed(mRunnable, 300);
                     } else {
-                        handler.postDelayed(mRunnable, 20);
+                        handler.postDelayed(mRunnable, 50);
                     }
                 }
             }

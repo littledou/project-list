@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -52,6 +54,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private int count_speak_number = 0;
 
     private TTSHelper ttsHelper;
+    int digress = -10;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -258,6 +261,9 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         //退出时释放链接
         if (ttsHelper != null)
             ttsHelper.cancle();
+        if(mCameraHelper!=null||mCameraHelper.isDetecting()){
+            mCameraHelper.stopDetection();
+        }
     }
 
 
@@ -270,7 +276,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                         switch (which) {
                             case 0:
                                 countDesc("检测结果:--认识");
-                                BaseApplication.getIntence().setStatus(StatusType.Play);
                                 initSpeak("和我来玩吧");
                                 break;
                             case 1:
@@ -280,6 +285,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                 face.action1();
                                 break;
                             case 2:
+                                BaseApplication.getIntence().setStatus(StatusType.Play);
 
                                 break;
                         }
@@ -290,8 +296,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     @Override
     public void onSuccess(YMFace ymFace, byte[] bytes, float v) {
         EmotionStatus.addFace(ymFace);
-
-
         hasPerson += "1";
 
         switch (getStatus()) {

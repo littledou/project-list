@@ -75,4 +75,17 @@ public class Brow extends BasePart {
         right = R.drawable.brow_sub_right2;
         postInvalidate();
     }
+
+    public void ang1() {
+        left = R.drawable.brow_ang_left1;
+        right = R.drawable.brow_ang_right1;
+        postInvalidate();
+    }
+
+    public void ang2() {
+        left = R.drawable.brow_ang_left2;
+        right = R.drawable.brow_ang_right2;
+        postInvalidate();
+    }
+
 }

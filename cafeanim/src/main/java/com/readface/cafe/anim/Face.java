@@ -17,7 +17,8 @@ public class Face extends RelativeLayout {
     private float radio = 1f;
 
     private boolean isAnim0 = false;
-    private boolean isAnim1 = false;
+    private boolean isAnim3 = false;
+    private boolean isAnim4 = false;
 
 
     private int count_emo0 = 0;
@@ -104,7 +105,8 @@ public class Face extends RelativeLayout {
         brow.nomal();
         mouth.setMouthImage(R.drawable.mouth0);
         isAnim0 = false;
-        isAnim1 = false;
+        isAnim3 = false;
+        isAnim4 = false;
     }
 
     public void stopSpeak() {
@@ -148,12 +150,31 @@ public class Face extends RelativeLayout {
     }
 
     public void emo3() {//anger
-
+        cleanALlAction();
+        isAnim3 = true;
+        mouth.setMouthImage(R.drawable.mouth_ang);
+        postDelayed(mEmo3Runnable, 20);
     }
+
+    Runnable mEmo3Runnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isAnim3) {
+                if (count_emo1 == 0) {
+                    count_emo1 = 1;
+                    brow.ang1();
+                } else {
+                    count_emo1 = 0;
+                    brow.ang2();
+                }
+                postDelayed(mEmo3Runnable, 120);
+            }
+        }
+    };
 
     public void emo4() {//surp
         cleanALlAction();
-        isAnim1 = true;
+        isAnim4 = true;
         eye.startEyeShock();
         postDelayed(mEmo4Runnable, 20);
     }
@@ -161,7 +182,7 @@ public class Face extends RelativeLayout {
     Runnable mEmo4Runnable = new Runnable() {
         @Override
         public void run() {
-            if (isAnim1) {//眉毛跳动，嘴巴跳动
+            if (isAnim4) {//眉毛跳动，嘴巴跳动
                 if (count_emo1 == 0) {
                     count_emo1 = 1;
                     brow.sub1();
