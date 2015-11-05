@@ -1,6 +1,9 @@
 package com.readface.cafe.utils;
 
+import android.util.Log;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -34,12 +37,58 @@ public class EmotionStatus {
             put(emotion[6], 6);
         }
     };
-    private static List<YMFace> faces = new ArrayList<>();
+    private static List<YMFace> faces = new ArrayList<>();//储存面部的集合
+
+    private static List<Integer> emo_list = new ArrayList<>();//储存每张面部表情的集合
+
+    private static List<Integer> eye_left_slope = new ArrayList<>();//储存左眼斜率的集合
+    private static List<Integer> eye_right_slope = new ArrayList<>();//储存右眼斜率的集合
+    private static List<Integer> mouth_slope = new ArrayList<>();//储存嘴巴斜率的集合
+    private static List<Integer> heady_slope = new ArrayList<>();//储存点头斜率的集合
+    private static List<Integer> headn_slope = new ArrayList<>();//储存摇头斜率的集合
+
+    private static int mouth_sum = 0;
 
     public static void addFace(YMFace face) {
+
         faces.add(face);
-        if (faces.size() > count)
+
+        int position = 0;
+        float max = 0;
+        float emo[] = face.getEmotions();
+        for (int j = 0; j < emo.length; j++) {
+            if (max <= emo[j]) {
+                max = emo[j];
+                position = j;
+            }
+        }
+        emo_list.add(position);
+
+        int size = faces.size();
+        if (size > 1) {
+            eye_left_slope.add((int) (face.getFacialActions()[1] - faces.get(size - 2).getFacialActions()[1]));
+            eye_right_slope.add((int) (face.getFacialActions()[0] - faces.get(size - 2).getFacialActions()[0]));
+            mouth_slope.add((int) (face.getFacialActions()[2] - faces.get(size - 2).getFacialActions()[2]));
+
+            mouth_sum += mouth_slope.get(mouth_slope.size() - 1);
+        }
+
+
+        if (faces.size() > count) {
+            mouth_sum -= mouth_slope.get(0);
             faces.remove(0);
+            emo_list.remove(0);
+            eye_left_slope.remove(0);
+            eye_right_slope.remove(0);
+            mouth_slope.remove(0);
+
+        }
+
+    }
+
+    public static int resultMouth() {
+
+        return mouth_sum;
     }
 
     public static String resultEmotion() {//6帧图像中哪个表情出现的最多
@@ -49,33 +98,6 @@ public class EmotionStatus {
         return emotion[countPosition()];
     }
 
-    public static double resultMouth() {
-        if (faces.size() < count) {
-            return 0;
-        }
-        int[] tar = new int[faces.size()];
-        for (int i = 0; i < faces.size(); i++) {
-            tar[i] = (int) faces.get(i).getFacialActions()[2];
-        }
-        return isOffest(tar);
-    }
-
-    private static double isOffest(int[] target) {
-
-        int nom = 0;
-        for (int cur : target) {
-            nom += cur;
-        }
-        nom = nom / target.length;//平均数
-        int vari = 0;
-        for (int cur : target) {
-            vari += (cur - nom) * (cur - nom);
-        }
-        vari = vari / target.length;//方差
-        double stand = Math.sqrt(vari);//标准差
-        return stand;
-    }
-
 
     //计算当前用户的情绪状态
     private static int countPosition() {
@@ -83,15 +105,7 @@ public class EmotionStatus {
 
         Map<Integer, Integer> map = new HashMap();
         for (int i = 0; i < faces.size(); i++) {
-            int position = 0;
-            float max = 0;
-            float emo[] = faces.get(i).getEmotions();
-            for (int j = 0; j < emo.length; j++) {//7个表情
-                if (max <= emo[j]) {
-                    max = emo[j];
-                    position = j;
-                }
-            }
+            int position = emo_list.get(i);
             Integer count = map.get(position);
             map.put(position, (count == null) ? 1 : count + 1);
         }

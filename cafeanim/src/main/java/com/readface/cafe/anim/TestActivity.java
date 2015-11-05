@@ -5,13 +5,16 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -54,7 +57,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private int count_speak_number = 0;
 
     private TTSHelper ttsHelper;
-    int digress = -10;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,22 +88,58 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         countDesc("启动，眨眼，激活设备");
 
         setContentView(parent);
-        face.action1();
+
+        ListView lv = new ListView(mContext);
+        lv.setSelector(new ColorDrawable(Color.TRANSPARENT));
+        lv.setDivider(new ColorDrawable(Color.TRANSPARENT));
+        parent.addView(lv);
+        lv.setAdapter(new ArrayAdapter<String>(mContext, R.layout.grid_item
+                , new String[]{"闭l眼", "睁l眼", "闭r眼", "睁r眼", "眼睛全部闭上", "眼睛全部睁开"
+                , "眩晕"}));
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        face.animCloseEye(true, false);
+                        break;
+                    case 1:
+                        face.animOpenEye(true, false);
+                        break;
+                    case 2:
+                        face.animCloseEye(false, true);
+                        break;
+                    case 3:
+                        face.animOpenEye(false, true);
+                        break;
+                    case 4:
+                        face.animCloseEye(true, true);
+                        break;
+                    case 5:
+                        face.animOpenEye(true, true);
+                    case 6:
+                        face.animGosh();
+                        break;
+
+                }
+            }
+        });
         initActivate();
+
     }
 
 
     private void countDesc(final String desc) {//描述输出
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                tv_desc.setText(desc +
-                        "--time--" + (System.currentTimeMillis() - time_count) + "status = "
-                        + getStatus() + "\n" + tv_desc.getText().toString());
-                time_count = System.currentTimeMillis();
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                tv_desc.setText(desc +
+//                        "--time--" + (System.currentTimeMillis() - time_count) + "status = "
+//                        + getStatus() + "\n" + tv_desc.getText().toString());
+//                time_count = System.currentTimeMillis();
+//            }
+//        });
     }
 
     private void initFaceDetector() {
@@ -213,7 +251,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                         if (count_speak_number >= 1) {
                             initSpeak(getResources().getString(R.string.create_nomal));
                             BaseApplication.getIntence().setStatus(StatusType.CreateNomal);
-                            face.action4();
                             count_speak_number = 0;
                         } else {
                             initSpeak("我叫小白，你叫什么名字");
@@ -241,14 +278,12 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         ttsHelper.ImSpeak(voice, new TTSHelper.TTSSpeakCallback() {
             @Override
             public void onStart() {
-                face.action3();
                 countDesc("speak start");
             }
 
             @Override
             public void onComplete() {
                 countDesc("speak complete");
-                face.stopSpeak();
                 initListener();
             }
         });
@@ -261,7 +296,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         //退出时释放链接
         if (ttsHelper != null)
             ttsHelper.cancle();
-        if(mCameraHelper!=null||mCameraHelper.isDetecting()){
+        if (mCameraHelper != null) {
             mCameraHelper.stopDetection();
         }
     }
@@ -282,7 +317,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                 countDesc("检测结果:--不认识，开始眨眼");
                                 BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
                                 initSpeak("我叫小白，，你叫什么名字？");
-                                face.action1();
                                 break;
                             case 2:
                                 BaseApplication.getIntence().setStatus(StatusType.Play);
@@ -326,7 +360,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                     countDesc("检测结果:--不认识，开始眨眼");
                                     BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
                                     initSpeak("我叫小白，，你叫什么名字？");
-                                    face.action1();
                                 }
 
 
@@ -345,9 +378,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 break;
             case Play://开始玩 表情跟随
 
-                if (ymFace.getFacialActions()[0] > 20) {
+                EmotionStatus.resultMouth();
 
-                }
                 String emo = EmotionStatus.resultEmotion();
                 if (emo != null && !emo.equals(currEmo)) {
                     int position = EmotionStatus.qualEmo.get(emo);

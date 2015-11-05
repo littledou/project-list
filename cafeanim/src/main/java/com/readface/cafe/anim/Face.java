@@ -2,7 +2,10 @@ package com.readface.cafe.anim;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.RelativeLayout;
+
+import com.readface.cafe.utils.ResUtils;
 
 /**
  * Face 包括腮红1，眉毛1，眼睛1，嘴巴1
@@ -16,18 +19,31 @@ public class Face extends RelativeLayout {
 
     private float radio = 1f;
 
-    private boolean isAnim0 = false;
-    private boolean isAnim3 = false;
-    private boolean isAnim4 = false;
+    /**
+     * 0:喜悦表情
+     * 1:愤怒表情
+     * 2:惊讶表情
+     * 3:眼白移动
+     * 4:眼睛闭合
+     * 5:眼睛睁开
+     * 6:眩晕
+     */
+    private boolean[] animTag;//长度就代表几种动画
+    private final int tag_count = 7;
+    private int eye_shock_size = 2;
 
+    private int digress = 0;
+    private int count_emo = 0;
+    private int countEye = 0;
+    private int countMouthGosh = 0;
 
-    private int count_emo0 = 0;
-    private int count_emo1 = 0;
 
     public Face(Context context, float radio) {
         super(context);
         this.radio = radio;
         initPart(context);
+
+        animTag = new boolean[tag_count];
     }
 
     private void initPart(Context context) {
@@ -65,82 +81,130 @@ public class Face extends RelativeLayout {
 
 
     public void action1() {//眨眼睛1：刚启动系统
-        cleanALlAction();
-        eye.startSight();
         mouth.setMouthImage(R.drawable.mouth_smile2);
     }
 
-    public void action2() {//说话开心：100
-        mouth.startSpeak(100, new int[]{
-                R.drawable.mouth0
-                , R.drawable.mouth_smile1
-                , R.drawable.mouth_smile2
-                , R.drawable.mouth_smile1
+    private void cleanEye() {
+        eye.allEnable(R.drawable.eye_sight, true, true);
+    }
+
+    public void animCloseEye(final boolean left, final boolean right) {
+        animTag[4] = true;
+        countEye = 0;
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[4]) {
+
+                    if (countEye < ResUtils.openEye.length) {
+                        eye.allEnable(ResUtils.openEye[countEye], left, right);
+                        countEye++;
+                        postDelayed(this, 50);
+                    }
+                }
+            }
+        }, 50);
+    }
+
+    public void animOpenEye(final boolean left, final boolean right) {
+        animTag[5] = true;
+        countEye = ResUtils.openEye.length - 1;
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[5]) {
+
+                    if (countEye >= 0) {
+                        eye.allEnable(ResUtils.openEye[countEye], left, right);
+                        countEye--;
+                        postDelayed(this, 50);
+                    }
+                }
+            }
+        }, 50);
+    }
+
+
+    private void animShockEye() {//眼睛颤动，，可怜样
+        animTag[3] = true;
+
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[3]) {
+                    eye.setEyeMove(eye_shock_size, 0);
+                    eye_shock_size = -eye_shock_size;
+                    postDelayed(this, 40);
+                }
+            }
         });
     }
 
-    public void action3() {//说话正常
-        mouth.startSpeak(100, new int[]{
-                R.drawable.mouth_nomal_speak0
-                , R.drawable.mouth_nomal_speak1
-                , R.drawable.mouth_nomal_speak2
-                , R.drawable.mouth_nomal_speak3
-                , R.drawable.mouth_nomal_speak4
-                , R.drawable.mouth_nomal_speak5
-        });
-    }
-
-    public void action4() {//悲伤1：眼白微颤，加嘴巴变化
+    public void animGosh() {
         cleanALlAction();
-        eye.startEyeShock();
-        mouth.startSpeak(3000, new int[]{
-                R.drawable.mouth_sad1
-                , R.drawable.mouth_sad0
+        animTag[6] = true;
+        digress = 0;
+        brow.ang1();
+        mouth.post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[6]) {
+                    if (countMouthGosh >= 4) {
+                        countMouthGosh = 0;
+                    }
+                    mouth.setMouthImage(ResUtils.goshMouth[countMouthGosh]);
+                    countMouthGosh++;
+                    mouth.postDelayed(this, 200);
+                }
+            }
+        });
+
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[6]) {
+                    eye.playGosh();
+                    postDelayed(this, 100);
+                }
+            }
         });
     }
 
     public void cleanALlAction() {//清除处理事件
-        eye.stopSight();
-        eye.stopEyeShock();
-        brow.nomal();
-        mouth.setMouthImage(R.drawable.mouth0);
-        isAnim0 = false;
-        isAnim3 = false;
-        isAnim4 = false;
-    }
-
-    public void stopSpeak() {
-        mouth.stopSpeak();
+        for (int i = 0; i < animTag.length; i++) {
+            animTag[i] = false;
+        }
+        brow.nomal();//眉毛恢复正常
+        mouth.setMouthImage(R.drawable.mouth0);//嘴巴恢复正常
+        cleanEye();
     }
 
     public void emo0() {//joy
         cleanALlAction();
-        isAnim0 = true;
-
-        postDelayed(mEmo0Runnable, 20);
+        animTag[0] = true;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[0]) {//眉毛跳动，嘴巴跳动
+                    if (count_emo == 0) {
+                        count_emo = 1;
+                        brow.up();
+                        mouth.setMouthImage(R.drawable.mouth_smile3);
+                    } else {
+                        count_emo = 0;
+                        brow.nomal();
+                        mouth.setMouthImage(R.drawable.mouth_smile1);
+                    }
+                    postDelayed(this, 120);
+                }
+            }
+        });
     }
 
-    Runnable mEmo0Runnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isAnim0) {//眉毛跳动，嘴巴跳动
-                if (count_emo0 == 0) {
-                    count_emo0 = 1;
-                    brow.up();
-                    mouth.setMouthImage(R.drawable.mouth_smile3);
-                } else {
-                    count_emo0 = 0;
-                    brow.nomal();
-                    mouth.setMouthImage(R.drawable.mouth_smile1);
-                }
-                postDelayed(mEmo0Runnable, 120);
-            }
-        }
-    };
 
     public void emo1() {//sad
         cleanALlAction();
-        eye.startEyeShock();
+        animShockEye();
         mouth.setMouthImage(R.drawable.mouth_sad2);
         brow.sad();
     }
@@ -151,51 +215,49 @@ public class Face extends RelativeLayout {
 
     public void emo3() {//anger
         cleanALlAction();
-        isAnim3 = true;
+        animTag[1] = true;
+        animShockEye();
         mouth.setMouthImage(R.drawable.mouth_ang);
-        postDelayed(mEmo3Runnable, 20);
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[1]) {
+                    if (count_emo == 0) {
+                        count_emo = 1;
+                        brow.ang1();
+                    } else {
+                        count_emo = 0;
+                        brow.ang2();
+                    }
+                    postDelayed(this, 120);
+                }
+            }
+        });
     }
 
-    Runnable mEmo3Runnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isAnim3) {
-                if (count_emo1 == 0) {
-                    count_emo1 = 1;
-                    brow.ang1();
-                } else {
-                    count_emo1 = 0;
-                    brow.ang2();
-                }
-                postDelayed(mEmo3Runnable, 120);
-            }
-        }
-    };
 
     public void emo4() {//surp
         cleanALlAction();
-        isAnim4 = true;
-        eye.startEyeShock();
-        postDelayed(mEmo4Runnable, 20);
+        animTag[2] = true;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[2]) {//眉毛跳动，嘴巴跳动
+                    if (count_emo == 0) {
+                        count_emo = 1;
+                        brow.sub1();
+                        mouth.setMouthImage(R.drawable.mouth_sub1);
+                    } else {
+                        count_emo = 0;
+                        brow.sub2();
+                        mouth.setMouthImage(R.drawable.mouth_sub2);
+                    }
+                    postDelayed(this, 120);
+                }
+            }
+        });
     }
 
-    Runnable mEmo4Runnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isAnim4) {//眉毛跳动，嘴巴跳动
-                if (count_emo1 == 0) {
-                    count_emo1 = 1;
-                    brow.sub1();
-                    mouth.setMouthImage(R.drawable.mouth_sub1);
-                } else {
-                    count_emo1 = 0;
-                    brow.sub2();
-                    mouth.setMouthImage(R.drawable.mouth_sub2);
-                }
-                postDelayed(mEmo4Runnable, 120);
-            }
-        }
-    };
 
     public void emo5() {//disg
 

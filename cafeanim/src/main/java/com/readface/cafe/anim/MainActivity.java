@@ -101,7 +101,6 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         countDesc("启动，眨眼，激活设备");
 
         setContentView(parent);
-        face.action3();
         initActivate();
     }
 
@@ -296,7 +295,6 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
                         if (count_speak_number >= 1) {
                             startTTSService("呜呜，你都不告诉我你叫什么名字，那我以后就叫你小朋友了哦");
                             MStatus = StatusType.NomalSpeak;
-                            face.action4();
                         } else {
                             startTTSService("你好啊，我叫小白，你叫什么名字");
                             count_speak_number++;
@@ -344,7 +342,6 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         @Override
         public void onSpeakBegin() {
 
-            face.action3();
             countDesc("speak start");
             Log.d(TAG, "开始");
         }
@@ -372,7 +369,6 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         @Override
         public void onCompleted(SpeechError speechError) {
             countDesc("speak complete");
-            face.stopSpeak();
             startIATService();
         }
 

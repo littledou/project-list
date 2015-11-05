@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 
 import java.util.ArrayList;
@@ -19,27 +20,13 @@ public class Eye extends BasePart {
 
 
     //眨眼动作开关
-    private boolean isEyeSight = false;
-    //眼睛颤颤的开关
-    private boolean isEyeShock = false;
-    private int eyeShockRange = 0;
-    private int[] eyeSight = {//眨眼动作
+    private int eyeMoveX = 0;
+    private int eyeMoveY = 0;
 
-            R.drawable.eye_sight
-            , R.drawable.eye_sight0
-            , R.drawable.eye_sight1
-            , R.drawable.eye_sight2
-            , R.drawable.eye_sight3
-            , R.drawable.eye_sight2
-            , R.drawable.eye_sight1
-            , R.drawable.eye_sight0
-    };
-
-    private List<Integer> open = new ArrayList<>();
-    private List<Integer> close = new ArrayList<>();
     private int sightImage1, sightImage2;
-    private int sightCount = 0;
-
+    private Bitmap sightImage1_b, sightImage2_b;
+    private boolean goho_ = false;
+    int digress = 10;
     private Rect mRect1;
 
     public Eye(Context context, float radio) {
@@ -57,8 +44,30 @@ public class Eye extends BasePart {
         mRect1.bottom = (int) (294 * radio);
 
         this.radio = radio;
-        sightImage1 = eyeSight[0];
-        sightImage2 = eyeSight[0];
+        sightImage1 = R.drawable.eye_sight;
+        sightImage2 = R.drawable.eye_sight;
+
+        enableLeftBitmap();
+        enableRightBitmap();
+    }
+
+
+    private void enableRightBitmap() {
+
+        if (sightImage2_b != null && !sightImage2_b.isRecycled()) {
+            sightImage2_b.recycle();
+            sightImage2_b = null;
+        }
+
+        sightImage2_b = BitmapFactory.decodeResource(getResources(), sightImage2);
+    }
+
+    private void enableLeftBitmap() {
+        if (sightImage1_b != null && !sightImage1_b.isRecycled()) {
+            sightImage1_b.recycle();
+            sightImage1_b = null;
+        }
+        sightImage1_b = BitmapFactory.decodeResource(getResources(), sightImage1);
     }
 
     @Override
@@ -70,98 +79,62 @@ public class Eye extends BasePart {
         canvas.drawCircle(147 * radio, 147 * radio, 147 * radio, mPaint);//left eye
         canvas.drawCircle(637 * radio, 147 * radio, 147 * radio, mPaint);
 
-        //眼白 初始状态
-        mPaint.setColor(Color.WHITE);
-        canvas.drawCircle(177 * radio + eyeShockRange, 117 * radio, 36 * radio, mPaint);//left point
-        canvas.drawCircle(144 * radio + eyeShockRange, 162 * radio, 12 * radio, mPaint);
+        if (goho_) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(digress);
+            Bitmap _b = Bitmap.createBitmap(sightImage1_b, 0, 0, sightImage1_b.getWidth(), sightImage1_b.getHeight(), matrix, true);
+            canvas.drawBitmap(_b, null, mRect, mPaint);//left sight
+            canvas.drawBitmap(_b, null, mRect1, mPaint);
+            digress += 10;
 
-        canvas.drawCircle(607 * radio - eyeShockRange, 117 * radio, 36 * radio, mPaint);
-        canvas.drawCircle(640 * radio - eyeShockRange, 162 * radio, 12 * radio, mPaint);
+        } else {
+            //眼白 初始状态
+            mPaint.setColor(Color.WHITE);
+            canvas.drawCircle(177 * radio + eyeMoveX, 117 * radio + eyeMoveY, 36 * radio, mPaint);//left point
+            canvas.drawCircle(144 * radio + eyeMoveX, 162 * radio + eyeMoveY, 12 * radio, mPaint);
 
-        //		//眼帘
-        if (isEyeSight) {
-            Bitmap eye1 = BitmapFactory.decodeResource(getResources(), sightImage1);
-            canvas.drawBitmap(eye1, null, mRect, mPaint);//left sight
-            Bitmap eye2 = BitmapFactory.decodeResource(getResources(), sightImage2);
-            canvas.drawBitmap(eye2, null, mRect1, mPaint);
+            canvas.drawCircle(607 * radio - eyeMoveX, 117 * radio - eyeMoveY, 36 * radio, mPaint);
+            canvas.drawCircle(640 * radio - eyeMoveX, 162 * radio - eyeMoveY, 12 * radio, mPaint);
+            //眼帘
+            canvas.drawBitmap(sightImage1_b, null, mRect, mPaint);//left sight
+
+            canvas.drawBitmap(sightImage2_b, null, mRect1, mPaint);
         }
+        eyeMoveX = 0;
+        eyeMoveY = 0;
+        System.gc();
+
+    }
+
+    public void setEyeMove(int x, int y) {
+        eyeMoveX = x;
+        eyeMoveY = y;
+        invalidate();
     }
 
 
-    /**
-     * 眼睛颤颤
-     */
-    public void startEyeShock() {
-        if (isEyeShock) return;
-        isEyeShock = true;
-        handler.removeCallbacks(mRunnable);
-        handler.post(mRunnable);
-    }
-
-    public void stopEyeShock() {
-        if (!isEyeShock) return;
-        handler.removeCallbacks(mRunnable);
-        isEyeShock = false;
-        eyeShockRange = 0;
+    public void allEnable(int resId, boolean left, boolean right) {
+        goho_ = false;
+        digress = 0;
+        if (left) {
+            sightImage1 = resId;
+            enableLeftBitmap();
+        }
+        if (right) {
+            sightImage2 = resId;
+            enableRightBitmap();
+        }
         postInvalidate();
     }
 
-    //一个眨眼动作的完整描述
-    public void startSight() {//眨眼
-        if (isEyeSight) return;
-        isEyeSight = true;
-        handler.removeCallbacks(mRunnable);
-        handler.post(mRunnable);
-    }
 
-    public void stopSight() {//停止眨眼
-        if (!isEyeSight) return;
-        handler.removeCallbacks(mRunnable);
-        isEyeSight = false;
-        sightCount = 0;
-        sightImage1 = eyeSight[0];
-        sightImage2 = eyeSight[0];
-        postInvalidate();
-    }
+    public void playGosh() {
+        if (!goho_) {
+            goho_ = true;
+            sightImage1 = R.drawable.eye_gosh;
+            enableLeftBitmap();
 
-    public void open() {
-
-    }
-
-    public void close() {
-
-    }
-
-    private Runnable mRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isEyeShock) {
-                if (eyeShockRange == 0) {
-                    eyeShockRange = 2;
-                }
-                eyeShockRange = -eyeShockRange;
-                postInvalidate();
-                handler.postDelayed(mRunnable, 60);
-            } else if (isEyeSight) {
-                if (sightCount == eyeSight.length * 3) {
-                    sightImage1 = eyeSight[0];
-                    sightImage2 = eyeSight[0];
-                    postInvalidate();
-                    sightCount = 0;
-                    handler.postDelayed(mRunnable, 2000);
-                } else {
-                    sightImage1 = eyeSight[sightCount % eyeSight.length];
-                    sightImage2 = eyeSight[sightCount % eyeSight.length];
-                    postInvalidate();
-                    sightCount++;
-
-                    if (sightCount == eyeSight.length * 2 + 1) {
-                        handler.postDelayed(mRunnable, 300);
-                    } else {
-                        handler.postDelayed(mRunnable, 50);
-                    }
-                }
-            }
         }
-    };
+        invalidate();
+    }
 }
