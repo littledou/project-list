@@ -43,11 +43,9 @@ public class EmotionStatus {
 
     private static List<Integer> eye_left_slope = new ArrayList<>();//储存左眼斜率的集合
     private static List<Integer> eye_right_slope = new ArrayList<>();//储存右眼斜率的集合
-    private static List<Integer> mouth_slope = new ArrayList<>();//储存嘴巴斜率的集合
     private static List<Integer> heady_slope = new ArrayList<>();//储存点头斜率的集合
     private static List<Integer> headn_slope = new ArrayList<>();//储存摇头斜率的集合
-
-    private static int mouth_sum = 0;
+    private static boolean sineEye = false;
 
     public static void addFace(YMFace face) {
 
@@ -66,29 +64,31 @@ public class EmotionStatus {
 
         int size = faces.size();
         if (size > 1) {
-            eye_left_slope.add((int) (face.getFacialActions()[1] - faces.get(size - 2).getFacialActions()[1]));
-            eye_right_slope.add((int) (face.getFacialActions()[0] - faces.get(size - 2).getFacialActions()[0]));
-            mouth_slope.add((int) (face.getFacialActions()[2] - faces.get(size - 2).getFacialActions()[2]));
+            sineEye = false;
+            int tar_eye_left = (int) (face.getFacialActions()[1] - faces.get(size - 2).getFacialActions()[1]);
+            int tar_eye_right = (int) (face.getFacialActions()[0] - faces.get(size - 2).getFacialActions()[0]);
+            if (Math.abs(tar_eye_right) >= 20 && Math.abs(tar_eye_left) >= 30) {
+                sineEye = true;
+                eye_right_slope.add(tar_eye_right);
+                eye_left_slope.add(tar_eye_left);
+            }
 
-            mouth_sum += mouth_slope.get(mouth_slope.size() - 1);
+
         }
-
-
         if (faces.size() > count) {
-            mouth_sum -= mouth_slope.get(0);
             faces.remove(0);
             emo_list.remove(0);
-            eye_left_slope.remove(0);
-            eye_right_slope.remove(0);
-            mouth_slope.remove(0);
-
+            if (eye_left_slope.size() > 5)
+                eye_left_slope.remove(0);
+            if (eye_right_slope.size() > 5)
+                eye_right_slope.remove(0);
         }
 
     }
 
-    public static int resultMouth() {
 
-        return mouth_sum;
+    public static boolean resultEyeSine() {
+        return sineEye;
     }
 
     public static String resultEmotion() {//6帧图像中哪个表情出现的最多

@@ -95,30 +95,49 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         parent.addView(lv);
         lv.setAdapter(new ArrayAdapter<String>(mContext, R.layout.grid_item
                 , new String[]{"闭l眼", "睁l眼", "闭r眼", "睁r眼", "眼睛全部闭上", "眼睛全部睁开"
-                , "眩晕"}));
+                , "眩晕", "喜悦", "悲伤", "愤怒", "惊讶", "正常", "眨眼"}));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        face.animCloseEye(true, false);
+                        face.animCloseLeftEye();
                         break;
                     case 1:
-                        face.animOpenEye(true, false);
+                        face.animOpenLeftEye();
                         break;
                     case 2:
-                        face.animCloseEye(false, true);
+                        face.animCloseRightEye();
                         break;
                     case 3:
-                        face.animOpenEye(false, true);
+                        face.animOpenRightEye();
                         break;
                     case 4:
-                        face.animCloseEye(true, true);
+                        face.closeAllEye();
                         break;
                     case 5:
-                        face.animOpenEye(true, true);
+                        face.openAllEye();
+                        break;
                     case 6:
                         face.animGosh();
+                        break;
+                    case 7:
+                        face.emo0();
+                        break;
+                    case 8:
+                        face.emo1();
+                        break;
+                    case 9:
+                        face.emo3();
+                        break;
+                    case 10:
+                        face.emo4();
+                        break;
+                    case 11:
+                        face.emo6();
+                        break;
+                    case 12:
+                        face.eyeSine();
                         break;
 
                 }
@@ -378,7 +397,10 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 break;
             case Play://开始玩 表情跟随
 
-                EmotionStatus.resultMouth();
+                if (EmotionStatus.resultEyeSine()) {
+                    face.eyeSine();
+                    Log.d("TestActivity", "眨眼");
+                }
 
                 String emo = EmotionStatus.resultEmotion();
                 if (emo != null && !emo.equals(currEmo)) {
@@ -391,6 +413,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                             break;
                         case 1:
                             face.emo1();
+
                             break;
                         case 2:
                             face.emo2();
@@ -406,6 +429,9 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                             break;
                         case 6:
                             face.emo6();
+                            break;
+                        default://表情优先
+
                             break;
                     }
                 }

@@ -457,7 +457,6 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
         //保存最近的几面部信息用于计算当前用户的情绪状态变化
         EmotionStatus.addFace(ymFace);
 
-        countDesc("检测到人脸 嘴部离散度" + EmotionStatus.resultMouth());
     }
 
     @Override

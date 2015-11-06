@@ -13,12 +13,37 @@ public class ResUtils {
             R.drawable.eye_sight2,
             R.drawable.eye_sight3
     };
+    public static final int openEyeSine[] = {
+            R.drawable.eye_sight0,
+            R.drawable.eye_sight1,
+            R.drawable.eye_sight2,
+            R.drawable.eye_sight3,
+            R.drawable.eye_sight2,
+            R.drawable.eye_sight1,
+            R.drawable.eye_sight0,
+            R.drawable.eye_sight
+    };
 
     public static final int goshMouth[] = {
             R.drawable.mouth_gosh1,
             R.drawable.mouth_gosh2,
             R.drawable.mouth_gosh3,
             R.drawable.mouth_gosh4
+    };
+
+    public static final int eyeSadLeft[] = {
+            R.drawable.eye_sad_cry_left,
+            R.drawable.eye_cry_left2,
+            R.drawable.eye_cry_left3,
+            R.drawable.eye_cry_left4,
+            R.drawable.eye_cry_left5,
+    };
+    public static final int eyeSadRight[] = {
+            R.drawable.eye_sad_cry_right,
+            R.drawable.eye_cry_right2,
+            R.drawable.eye_cry_right3,
+            R.drawable.eye_cry_right4,
+            R.drawable.eye_cry_right5,
     };
 
 }
