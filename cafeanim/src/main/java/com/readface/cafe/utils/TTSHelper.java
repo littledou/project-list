@@ -14,6 +14,7 @@ import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
 import com.readface.cafe.anim.JsonParser;
+import com.readface.cafe.Iinteface.*;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,13 +39,13 @@ public class TTSHelper {
         initTTS();
     }
 
-    public void ImSpeak(String voice, final TTSSpeakCallback callback) {
+    public void ImSpeak(String voice, final TTSSpeakCallback mCallback) {
 
         mTts.startSpeaking(voice, new SynthesizerListener() {
             @Override
             public void onSpeakBegin() {
-                if (callback != null)
-                    callback.onStart();
+                if (mCallback != null)
+                    mCallback.onStart();
             }
 
             @Override
@@ -69,8 +70,8 @@ public class TTSHelper {
 
             @Override
             public void onCompleted(SpeechError speechError) {
-                if (callback != null)
-                    callback.onComplete();
+                if (mCallback != null)
+                    mCallback.onComplete();
             }
 
             @Override
@@ -80,7 +81,7 @@ public class TTSHelper {
         });
     }
 
-    public void ImListener(final TTSListenerCallback callback) {
+    public void ImListener(final TTSListenerCallback mCallback) {
         mIat.startListening(new RecognizerListener() {
             @Override
             public void onVolumeChanged(int i, byte[] bytes) {
@@ -106,16 +107,17 @@ public class TTSHelper {
                         resultBuffer.append(mIatResults.get(key));
                     }
                     String voice = resultBuffer.toString();
-                    if (callback != null)
-                        callback.callback(voice);
+                    if (mCallback != null)
+                        mCallback.callback(voice);
                 }
             }
 
             @Override
             public void onError(SpeechError speechError) {
+                Log.d(TAG, speechError.toString());
                 if (!mTts.isSpeaking()) {
-                    if (callback != null)
-                        callback.error();
+                    if (mCallback != null)
+                        mCallback.error();
                 }
             }
 
@@ -207,16 +209,11 @@ public class TTSHelper {
         }
     }
 
-
-    public interface TTSListenerCallback {
-        void callback(String response);
-
-        void error();
+    public boolean isListen() {
+        return mIat.isListening();
     }
 
-    public interface TTSSpeakCallback {
-        void onStart();
-
-        void onComplete();
+    public boolean isSpeak() {
+        return mTts.isSpeaking();
     }
 }

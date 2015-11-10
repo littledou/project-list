@@ -95,6 +95,20 @@ public class Brow extends BasePart {
         postInvalidate();
     }
 
+    public void comfort() {
+//        right = R.drawable.brow_comfort_left;
+//        left = R.drawable.brow_comfort_right;
+        enableBitmap();
+        postInvalidate();
+    }
+
+    public void smile3() {
+//        right = R.drawable.brow_smile3_left;
+//        left = R.drawable.brow_smile3_right;
+        enableBitmap();
+        postInvalidate();
+    }
+
     public void ang1() {
         left = R.drawable.brow_ang_left1;
         right = R.drawable.brow_ang_right1;
@@ -105,6 +119,11 @@ public class Brow extends BasePart {
     public void ang2() {
         left = R.drawable.brow_ang_left2;
         right = R.drawable.brow_ang_right2;
+        enableBitmap();
+        postInvalidate();
+    } public void smile4() {
+        left = R.drawable.brow_ang_right2;
+        right = R.drawable.brow_ang_left2;
         enableBitmap();
         postInvalidate();
     }

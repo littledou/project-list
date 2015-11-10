@@ -14,7 +14,6 @@ import android.graphics.Matrix;
 public class Blush extends BasePart {
 
 
-
     public Blush(Context context, float radio, int direc) {
         super(context);
         mRect.left = 0;
@@ -35,7 +34,7 @@ public class Blush extends BasePart {
 
         if (direc == RIGHT) {
             Matrix matrix = new Matrix();
-            matrix.postScale(-1,1);
+            matrix.postScale(-1, 1);
             bm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
         }
         canvas.drawBitmap(bm, null, mRect, mPaint);

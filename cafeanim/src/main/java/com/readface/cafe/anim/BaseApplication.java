@@ -21,7 +21,7 @@ public class BaseApplication extends Application {
 
     @Override
     public void onCreate() {
-        SpeechUtility.createUtility(BaseApplication.this, "appid=561e1035");
+        SpeechUtility.createUtility(BaseApplication.this, "appid=56404c83");
         super.onCreate();
         VolleyHelper.initQueue(this);
         intence = this;

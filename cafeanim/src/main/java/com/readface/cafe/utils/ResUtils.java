@@ -46,4 +46,23 @@ public class ResUtils {
             R.drawable.eye_cry_right5,
     };
 
+    public static final int mouthSpeakNomal[] = {
+            R.drawable.mouth_nomal_speak0,
+            R.drawable.mouth_nomal_speak1,
+            R.drawable.mouth_nomal_speak2,
+            R.drawable.mouth_nomal_speak3,
+            R.drawable.mouth_nomal_speak4
+    };
+
+    public static final int mouthSmail1[] = {
+            R.drawable.mouth0,
+            R.drawable.mouth_smile2,
+            R.drawable.mouth_smile1
+    };
+
+    public static final int eyeTrapped[] = {
+            R.drawable.eye_sight0,
+            R.drawable.eye_sight1,
+            R.drawable.eye_sight2
+    };
 }

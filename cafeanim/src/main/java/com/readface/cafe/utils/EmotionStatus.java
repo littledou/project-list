@@ -19,12 +19,12 @@ public class EmotionStatus {
     private static final int count = 10;
     public static final String[] emotion = {
             "joy",
-            "sad",
+            "sadness",
             "fear",
             "anger",
-            "surp",
-            "disg",
-            "nomal"
+            "surprise",
+            "disgust",
+            "neutral"
     };
     public static Map<String, Integer> qualEmo = new HashMap() {
         {
@@ -46,6 +46,8 @@ public class EmotionStatus {
     private static List<Integer> heady_slope = new ArrayList<>();//储存点头斜率的集合
     private static List<Integer> headn_slope = new ArrayList<>();//储存摇头斜率的集合
     private static boolean sineEye = false;
+    private static boolean head_slopeY = false;
+    private static boolean head_slopeN = false;
 
     public static void addFace(YMFace face) {
 
@@ -73,6 +75,19 @@ public class EmotionStatus {
                 eye_left_slope.add(tar_eye_left);
             }
 
+            head_slopeY = false;
+
+            int tar_headY = (int) (face.getHeadPose()[1] - faces.get(size - 2).getHeadPose()[1]);
+            if (Math.abs(tar_headY) > 20) {
+                head_slopeY = true;
+                heady_slope.add(tar_headY);
+            }
+            head_slopeN = false;
+            int tar_head = (int) (face.getHeadPose()[2] - faces.get(size - 2).getHeadPose()[2]);
+            if (Math.abs(tar_head) > 20) {
+                head_slopeN = true;
+                headn_slope.add(tar_headY);
+            }
 
         }
         if (faces.size() > count) {
@@ -82,6 +97,10 @@ public class EmotionStatus {
                 eye_left_slope.remove(0);
             if (eye_right_slope.size() > 5)
                 eye_right_slope.remove(0);
+            if (heady_slope.size() > 5)
+                heady_slope.remove(0);
+            if (headn_slope.size() > 5)
+                headn_slope.remove(0);
         }
 
     }
@@ -89,6 +108,14 @@ public class EmotionStatus {
 
     public static boolean resultEyeSine() {
         return sineEye;
+    }
+
+    public static boolean resultHeadN() {
+        return head_slopeN;
+    }
+
+    public static boolean resultHeadY() {
+        return head_slopeY;
     }
 
     public static String resultEmotion() {//6帧图像中哪个表情出现的最多

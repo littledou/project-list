@@ -1,24 +1,25 @@
 package com.readface.cafe.anim;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.volley.VolleyError;
+import com.readface.cafe.Iinteface.TTSListenerCallback;
+import com.readface.cafe.Iinteface.TTSSpeakCallback;
 import com.readface.cafe.utils.AppUrl;
 import com.readface.cafe.utils.CameraHelper;
 import com.readface.cafe.utils.EmotionStatus;
@@ -58,6 +59,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
     private TTSHelper ttsHelper;
 
+    private boolean isPlay = false;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
@@ -95,7 +98,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         parent.addView(lv);
         lv.setAdapter(new ArrayAdapter<String>(mContext, R.layout.grid_item
                 , new String[]{"闭l眼", "睁l眼", "闭r眼", "睁r眼", "眼睛全部闭上", "眼睛全部睁开"
-                , "眩晕", "喜悦", "悲伤", "愤怒", "惊讶", "正常", "眨眼"}));
+                , "眩晕", "喜悦", "悲伤", "愤怒", "惊讶", "正常", "眨眼", "连续眨眼", "安慰", "委屈"
+                , "鬼脸", "开心初始", "悲伤1", "悲伤2", "大哭", "笑1", "笑2", "笑3", "笑4"}));
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -139,26 +143,62 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     case 12:
                         face.eyeSine();
                         break;
+                    case 13:
+                        face.blink1();
+                        break;
+                    case 14:
+                        face.comfort();
+                        break;
+                    case 15:
+                        face.grievance();
+                        break;
+                    case 16:
+                        face.grimace();
+                        break;
+                    case 17:
+                        face.happy_initial();
+                        break;
+                    case 18:
+                        face.sad1();
+                        break;
+                    case 19:
+                        face.sad2();
+                        break;
+                    case 20:
+                        face.cry();
+                        break;
+                    case 21:
+                        face.smile1();
+                        break;
+                    case 22:
+                        face.smile2();
+                        break;
+                    case 23:
+                        face.smile3();
+                        break;
+                    case 24:
+                        face.smile4();
+                        break;
 
                 }
             }
         });
-        initActivate();
-
+//        initActivate();
+        BaseApplication.getIntence().setStatus(StatusType.Nomal);
     }
 
 
     private void countDesc(final String desc) {//描述输出
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                tv_desc.setText(desc +
-//                        "--time--" + (System.currentTimeMillis() - time_count) + "status = "
-//                        + getStatus() + "\n" + tv_desc.getText().toString());
-//                time_count = System.currentTimeMillis();
-//            }
-//        });
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                tv_desc.setText(desc +
+                        "--time--" + (System.currentTimeMillis() - time_count) + "status = "
+                        + getStatus() + "\n" + tv_desc.getText().toString());
+                time_count = System.currentTimeMillis();
+            }
+        });
     }
 
     private void initFaceDetector() {
@@ -186,7 +226,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     initFaceDetector();
                     ttsHelper = new TTSHelper(mContext);//开启音频服务
                     //启动开场白
-                    checkIsPerson();
+//                    checkIsPerson();
                 }
             }
 
@@ -199,43 +239,22 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
 
     private void initListener() {
-        ttsHelper.ImListener(new TTSHelper.TTSListenerCallback() {
+        if (ttsHelper.isListen()) return;
+        ttsHelper.ImListener(new TTSListenerCallback() {
             @Override
             public void callback(String response) {
 
+                countDesc("监听结果--" + response);
                 StatusType MStatus = getStatus();
                 switch (MStatus) {
                     case Nomal:
                         //TODO 处理将录入的语音 接收下一步动作的指示
-                        VolleyHelper.doGetNext(AppUrl.getNext(response,
-                                        BaseApplication.getIntence().getUser_emotion()),
-                                new VolleyHelper.HelpListener() {
-                                    @Override
-                                    public void onResponse(String s) {
-                                        if (s != null) {
-                                            try {
-                                                countDesc("next success" + s);
-                                                JSONObject result = new JSONObject(s);
-                                                String voice = result.getJSONObject("action").getString("voice");
-                                                initSpeak(voice);
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onError(VolleyError error) {
-                                        Log.d(TAG, "error log = " + error.getMessage());
-                                        countDesc("next error");
-                                        initSpeak("我没听懂，再说一次吧");
-                                    }
-                                });
+                        getNext(response);
                         break;
                     case CreateNomal:
-                        response = getResources().getString(R.string.create_nomal);
+                        response = getResources().getString(R.string.create_name);
                     case CreatePerson://认识这个人，，确定名字
-                        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+
                         VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().getId())
                                 , response
                                 , new VolleyHelper.HelpListener() {
@@ -247,6 +266,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                         JSONObject result = new JSONObject(s);
                                         String voice = result.getJSONObject("action").getString("voice");
                                         initSpeak(voice);
+                                        BaseApplication.getIntence().setStatus(StatusType.Nomal);
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
@@ -255,15 +275,22 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
                             @Override
                             public void onError(VolleyError error) {
+                                Log.d(TAG, "error log = " + error.getMessage());
                                 countDesc("put error");
+                                initSpeak("我没听懂，再说一次吧");
                             }
                         });
+                        break;
+                    case Play:
+                        //TODO 处理将录入的语音 接收下一步动作的指示
+                        getNext(response);
                         break;
                 }
             }
 
             @Override
             public void error() {
+                countDesc("listen error ");
                 StatusType MStatus = getStatus();
                 switch (MStatus) {
                     case CreatePerson:
@@ -280,10 +307,17 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                         if (count_speak_number >= 1) {
                             countDesc("关机");
                             //TODO 关机
+                            initListener();
                         } else {
                             initSpeak("再没人说话我就关机了哦");
                             count_speak_number++;
                         }
+                        break;
+                    case Nomal:
+                        initListener();
+                        break;
+                    case Play:
+                        initListener();
                         break;
                     default:
                         initListener();
@@ -294,14 +328,17 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
     public void initSpeak(String voice) {
-        ttsHelper.ImSpeak(voice, new TTSHelper.TTSSpeakCallback() {
+        if (ttsHelper.isSpeak()) return;
+        ttsHelper.ImSpeak(voice, new TTSSpeakCallback() {
             @Override
             public void onStart() {
+                face.mouthStartSpeakAnim();
                 countDesc("speak start");
             }
 
             @Override
             public void onComplete() {
+                face.mouthStopSpeakAnim();
                 countDesc("speak complete");
                 initListener();
             }
@@ -321,40 +358,15 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
 
-    public void checkIsPerson() {
-
-        new AlertDialog.Builder(this).setTitle("认识不认识你").setItems(new String[]{"认识", "不认识", "玩"},
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case 0:
-                                countDesc("检测结果:--认识");
-                                initSpeak("和我来玩吧");
-                                break;
-                            case 1:
-                                countDesc("检测结果:--不认识，开始眨眼");
-                                BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
-                                initSpeak("我叫小白，，你叫什么名字？");
-                                break;
-                            case 2:
-                                BaseApplication.getIntence().setStatus(StatusType.Play);
-
-                                break;
-                        }
-                    }
-                }).show();
-    }
-
     @Override
     public void onSuccess(YMFace ymFace, byte[] bytes, float v) {
         EmotionStatus.addFace(ymFace);
-        hasPerson += "1";
-
+        hasPerson += "b";
         switch (getStatus()) {
             case Nomal:
-                hasPerson = hasPerson.substring(1, hasPerson.length());
-                if (face_success && StringUtil.getCharCount(hasPerson, '1') >= 18) {
+                if (hasPerson.length() > 20)
+                    hasPerson = hasPerson.substring(1, hasPerson.length());
+                if (face_success && StringUtil.getCharCount(hasPerson, 'b') >= 18) {
                     face_success = false;
 
                     countDesc("获取到人脸信息，发起检测");
@@ -369,23 +381,23 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                 BaseApplication.getIntence().setId(result.getJSONObject("person").getString("id"));
                                 String voice = result.getJSONObject("action").getString("voice");
 
-                                if (result.getJSONObject("person").getBoolean("recognized")) {
-                                    //1：熟悉的人
-                                    countDesc("检测结果:--认识");
-                                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
-                                    initSpeak("和我来玩吧");
-                                } else {
-                                    //2: 陌生人 创建人物 start voice:你好啊，我是你的新朋友，小白，请问你叫什么名字
-                                    countDesc("检测结果:--不认识，开始眨眼");
-                                    BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
-                                    initSpeak("我叫小白，，你叫什么名字？");
-                                }
-
+//                                if (result.getJSONObject("person").getBoolean("recognized")) {
+//                                    //1：熟悉的人
+//                                    countDesc("检测结果:--认识");
+//                                    face.eyeSine();
+//                                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+//                                    initSpeak("要不要玩？");
+//                                } else {
+                                //2: 陌生人 创建人物
+                                countDesc("检测结果:--不认识");
+                                face.eyeSine();
+                                BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
+                                initSpeak("我是小白，你叫什么名字");
+//                                }
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
-
                         }
 
                         @Override
@@ -396,12 +408,10 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 }
                 break;
             case Play://开始玩 表情跟随
-
                 if (EmotionStatus.resultEyeSine()) {
                     face.eyeSine();
                     Log.d("TestActivity", "眨眼");
                 }
-
                 String emo = EmotionStatus.resultEmotion();
                 if (emo != null && !emo.equals(currEmo)) {
                     int position = EmotionStatus.qualEmo.get(emo);
@@ -413,7 +423,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                             break;
                         case 1:
                             face.emo1();
-
                             break;
                         case 2:
                             face.emo2();
@@ -437,17 +446,21 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 }
 
                 break;
+            default:
+                hasPerson = "";
+                break;
         }
     }
 
     @Override
     public void onError() {
-        hasPerson += "0";
-        hasPerson = hasPerson.substring(1, hasPerson.length());
-        if (StringUtil.getCharCount(hasPerson, '0') >= 18) {
+        hasPerson += "a";
+        if (hasPerson.length() > 20)
+            hasPerson = hasPerson.substring(1, hasPerson.length());
+        if (StringUtil.getCharCount(hasPerson, 'a') >= 18) {
             hasPerson = "";
             face_success = true;
-            countDesc("摄像头采集不到人脸信息 ");
+            Log.d(TAG, "人脸检测失败");
         }
     }
 
@@ -472,5 +485,89 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
     private StatusType getStatus() {
         return BaseApplication.getIntence().getStatus();
+    }
+
+
+    void getNext(String voice) {
+        VolleyHelper.doGetNext(AppUrl.getNext(voice,
+                        BaseApplication.getIntence().getUser_emotion()),
+                new VolleyHelper.HelpListener() {
+                    @Override
+                    public void onResponse(String s) {
+                        if (s != null) {
+                            try {
+                                countDesc("next success---" + s);
+                                JSONObject result = new JSONObject(s).getJSONObject("action");
+                                String voice = result.getString("voice");
+                                String anim = result.getString("emotion");
+                                String id = result.getString("behavior_id");
+
+                                if (StringUtil.isNotEmpty(anim)) {//3秒动画，开始下一步
+
+                                    Message msg = new Message();
+                                    msg.obj = new String[]{id, voice};
+                                    msg.what = 1;
+                                    mHandler.sendMessageDelayed(msg, 3000);
+                                } else {
+                                    statusChange(id, voice);
+                                }
+
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(VolleyError error) {
+                        Log.d(TAG, "error log = " + error.getMessage());
+                        countDesc("next error");
+                        initSpeak("我没听懂，再说一次吧");
+                    }
+                });
+    }
+
+    void statusChange(String id, String voice) {
+        if (StringUtil.isEmpty(id)) {
+            BaseApplication.getIntence().setStatus(StatusType.Nomal);
+            initSpeak(voice);
+            return;
+        }
+        switch (id) {
+            case "3"://玩
+                if (!isPlay) {
+                    isPlay = true;
+                    initSpeak(voice);
+                    BaseApplication.getIntence().setStatus(StatusType.Play);
+                }
+                break;
+            case "2"://不玩
+                isPlay = false;
+                BaseApplication.getIntence().setStatus(StatusType.Nomal);
+            default:
+                initSpeak(voice);
+                break;
+        }
+    }
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void dispatchMessage(Message msg) {
+            String[] arr = (String[]) msg.obj;
+            switch (msg.what) {
+                case 1:
+                    statusChange(arr[0], arr[1]);
+                    break;
+            }
+        }
+    };
+
+    void speakAnim(String anim) {
+
+    }
+
+    void stopAnim() {
+
     }
 }

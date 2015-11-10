@@ -8,27 +8,28 @@ import java.net.URLEncoder;
  */
 public class AppUrl {
 
-//    private static String APPURL = "http://121.42.141.249:8087/v1/";
-    private static String APPURL = "http://chatbot.readface.cn/v1/";
-    public static String postActivate(){
-        return APPURL+"robots/activate";
+    private static String APPURL = "http://121.42.141.249:8087/v1/";
+
+    //    private static String APPURL = "http://chatbot.readface.cn/v1/";
+    public static String postActivate() {
+        return APPURL + "robots/activate";
     }
 
-    public static String getNext(String voice,String emotion){
+    public static String getNext(String voice, String emotion) {
         try {
-            voice = URLEncoder.encode(voice,"utf-8");
+            voice = URLEncoder.encode(voice, "utf-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        return APPURL+"actions/next?person_voice="+voice+"&person_id=1&person_emotion="+emotion;
+        return APPURL + "actions/next?person_voice=" + voice + "&person_id=1&person_emotion=" + emotion;
     }
 
-    public static String postFaceVerify(){
-        return APPURL+"people/verify";
+    public static String postFaceVerify() {
+        return APPURL + "people/verify";
     }
 
 
-    public static String putUpdatePerson(String id){
-        return APPURL+"people/"+id;
+    public static String putUpdatePerson(String id) {
+        return APPURL + "people/" + id;
     }
 }

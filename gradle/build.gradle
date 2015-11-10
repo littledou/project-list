@@ -1,0 +1,50 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 16
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "mobile.AUDection"
+        minSdkVersion 11
+        targetSdkVersion 11
+
+        //ndk {
+        //    moduleName "face_landmark"
+        //    abiFilters "armeabi-v7a", "x86"
+        //}
+    }
+
+
+
+    // add begin
+    sourceSets.main.jni.srcDirs = []
+    sourceSets.main.jniLibs.srcDirs = ['src/main/libs'];
+    //task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
+    //    ndkDir = project.plugins.findPlugin('com.android.application').getNdkFolder()
+    //    commandLine "$ndkDir/ndk-build.cmd",
+    //            'NDK_PROJECT_PATH=build/intermediates/ndk',
+    //            'NDK_LIBS_OUT=src/main/jniLibs',
+    //            'APP_BUILD_SCRIPT=src/main/jni/Android.mk',
+    //            'NDK_APPLICATION_MK=src/main/jni/Application.mk'
+    //}
+    //tasks.withType(JavaCompile) {
+    //    compileTask -> compileTask.dependsOn ndkBuild
+    //}
+    // add end
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile project(':openCVLibrary2411')
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile files('src/main/libs/unity-classes.jar')
+    compile files('src/main/libs/affdex_sdk.jar')
+}

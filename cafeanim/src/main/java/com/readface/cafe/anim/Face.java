@@ -1,7 +1,6 @@
 package com.readface.cafe.anim;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -32,16 +31,25 @@ public class Face extends RelativeLayout {
      * 8:眩晕
      * 9:眨眼
      * 10:眼泪
+     * 11:连续眨眼
+     * 12:腮红颤动
+     * 13:smile 1
+     * 14: 困
      */
     private boolean[] animTag;//长度就代表几种动画
-    private final int tag_count = 11;
+    private final int tag_count = 15;
     private int eye_shock_size = 2;
+    private int blush_shock_size = 2;
+
     private int eye_cry_size = 6;
 
     private int count_emo = 0;
     private int countEye = 0;
+    private int sadCount = 0;
     private int countEyeRight = 0;
     private int countMouthGosh = 0;
+    private int countSmile = 0;
+    private int countTrapped = 0;
     private int digress = 60;
     private boolean isCloseAllEye = false;
 
@@ -65,7 +73,6 @@ public class Face extends RelativeLayout {
         addView(eye);
         eyeRight = new Eye(context, radio, false);
         addView(eyeRight);
-
 
         brow = new Brow(context, radio);
         addView(brow);
@@ -226,9 +233,27 @@ public class Face extends RelativeLayout {
             public void run() {
                 if (animTag[3]) {
                     eye.setEyeMove(eye_shock_size, 0);
-                    eyeRight.setEyeMove(eye_shock_size, 0);
+                    eyeRight.setEyeMove(-eye_shock_size, 0);
                     eye_shock_size = -eye_shock_size;
-                    postDelayed(this, 40);
+                    postDelayed(this, 80);
+                }
+            }
+        });
+    }
+
+    private void animShockBlush() {//腮红颤动
+
+        if (animTag[12]) return;
+        animTag[12] = true;
+
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[12]) {
+                    blushLeft.animate().translationX(blush_shock_size).setDuration(80);
+                    blushRight.animate().translationX(-blush_shock_size).setDuration(80);
+                    blush_shock_size = -blush_shock_size;
+                    postDelayed(this, 80);
                 }
             }
         });
@@ -316,8 +341,6 @@ public class Face extends RelativeLayout {
     }
 
 
-    private int sadCount = 0;
-
     public void emo1() {//sad
         cleanALlAction();
         animShockEye();
@@ -325,7 +348,6 @@ public class Face extends RelativeLayout {
         brow.sad();
 
         animTag[10] = true;
-        Log.d("TestActivity", "child count  = " + getChildCount());
         final View cryleft = new View(mContext);
 
         cryleft.setLayoutParams(new RelativeLayout.LayoutParams((int) (156 * radio), (int) (306 * radio)));
@@ -428,7 +450,7 @@ public class Face extends RelativeLayout {
         if (animTag[9] || animTag[8]) return;
         animTag[9] = true;
         countEye = 0;
-        postDelayed(new Runnable() {
+        post(new Runnable() {
             @Override
             public void run() {
                 if (animTag[9]) {
@@ -436,13 +458,280 @@ public class Face extends RelativeLayout {
                         eye.enableRes(ResUtils.openEyeSine[countEye]);
                         eyeRight.enableRes(ResUtils.openEyeSine[countEye]);
                         countEye++;
-                        postDelayed(this, 50);
+                        postDelayed(this, 20);
 
                     } else {
                         animTag[9] = false;
                     }
                 }
             }
-        }, 50);
+        });
+    }
+
+    public void mouthStartSpeakAnim() {//愤怒 不能说话
+        mouth.startSpeak(120, ResUtils.mouthSpeakNomal);
+    }
+
+    public void mouthStopSpeakAnim() {
+        mouth.stopSpeak();
+    }
+
+    private int blinkCount = 0;
+
+    public void blink1() {//连续眨眼
+        if (animTag[11]) return;
+        cleanALlAction();
+        blinkCount = 0;
+        animTag[11] = true;
+        mouth.setMouthImage(R.drawable.mouth_smile1);
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[11]) {
+                    eyeSine();
+                    if (blinkCount < 1) {
+                        postDelayed(this, 500);
+                    } else if (blinkCount == 1) {
+                        postDelayed(this, 1000);
+                    } else {
+                        animTag[11] = false;
+                        mouth.setMouthImage(R.drawable.mouth0);
+                    }
+                    blinkCount++;
+                }
+            }
+        });
+    }
+
+
+    public void comfort() {//安慰
+
+        mouth.setMouthImage(R.drawable.mouth_smile4);
+        brow.comfort();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mouth.setMouthImage(R.drawable.mouth0);
+                brow.nomal();
+            }
+        }, 3000);
+    }
+
+    public void grievance() {//委屈
+
+        mouth.setMouthImage(R.drawable.mouth_sad0);
+        brow.sad();
+        animShockEye();
+        animShockBlush();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[3] = false;
+                animTag[12] = false;
+                mouth.setMouthImage(R.drawable.mouth0);
+                brow.nomal();
+            }
+        }, 3000);
+    }
+
+    public void grimace() {//鬼脸
+
+    }
+
+    public void happy_initial() {//开心的初始状态
+        mouth.setMouthImage(R.drawable.mouth_smile2);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
+    }
+
+    public void sad1() {
+        mouth.setMouthImage(R.drawable.mouth_sad0);
+        animShockEye();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[3] = false;
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
+    }
+
+    public void sad2() {
+        mouth.setMouthImage(R.drawable.mouth_sad2);
+        animShockEye();
+        brow.sad();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[3] = false;
+                mouth.setMouthImage(R.drawable.mouth0);
+                brow.nomal();
+            }
+        }, 3000);
+    }
+
+    public void cry() {
+
+        mouth.setMouthImage(R.drawable.mouth_sad_cry);
+        brow.sad();
+
+        animTag[10] = true;
+        final View cryleft = new View(mContext);
+        cryleft.setLayoutParams(new RelativeLayout.LayoutParams((int) (156 * radio), (int) (306 * radio)));
+        cryleft.setX(187 * radio);
+        cryleft.setY(446 * radio);
+
+        final View cryright = new View(mContext);
+        cryright.setLayoutParams(new RelativeLayout.LayoutParams((int) (156 * radio), (int) (306 * radio)));
+        cryright.setX(742 * radio);
+        cryright.setY(446 * radio);
+
+        if (getChildCount() == 6) {
+            addView(cryleft);
+            addView(cryright);
+        }
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[10]) {
+                    eye_cry_size = -eye_cry_size;
+                    eye.setEyeCry(eye_cry_size, eye_cry_size);
+                    eyeRight.setEyeCry(eye_cry_size, eye_cry_size);
+
+                    if (sadCount >= ResUtils.eyeSadLeft.length) sadCount = 0;
+                    cryleft.setBackgroundResource(ResUtils.eyeSadLeft[sadCount]);
+                    cryright.setBackgroundResource(ResUtils.eyeSadRight[sadCount]);
+                    sadCount++;
+                    postDelayed(this, 200);
+                }
+            }
+        });
+
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[10] = false;
+                if (getChildCount() > 6) {
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            removeViewAt(6);
+                        }
+                    });
+                }
+                if (getChildCount() > 6) {
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            removeViewAt(6);
+                        }
+                    });
+                }
+                mouth.setMouthImage(R.drawable.mouth0);
+                brow.nomal();
+                cleanEye();
+            }
+        }, 3000);
+    }
+
+    public void smile1() {
+
+        animTag[13] = true;
+        post(new Runnable() {
+            @Override
+            public void run() {
+
+                if (animTag[13]) {
+
+                    if (countSmile < ResUtils.mouthSmail1.length) {
+                        mouth.setMouthImage(ResUtils.mouthSmail1[countSmile]);
+                        countSmile++;
+                        postDelayed(this, 120);
+                    } else {
+                        animTag[13] = false;
+                        countSmile = 0;
+                    }
+
+                }
+            }
+        });
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[13] = false;
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
+
+    }
+
+    public void smile2() {
+
+        emo0();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                animTag[0] = false;
+            }
+        }, 3000);
+    }
+
+    public void smile3() {
+        brow.smile3();
+        mouth.setMouthImage(R.drawable.mouth_smile2);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                brow.nomal();
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
+    }
+
+    public void smile4() {
+        brow.smile4();
+        mouth.setMouthImage(R.drawable.mouth_smile2);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                brow.nomal();
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
+    }
+
+    public void trapped() {
+        //TODO 困的
+        mouth.setMouthImage(R.drawable.mouth_sad0);
+        animTag[14] = true;
+        post(new Runnable() {
+            @Override
+            public void run() {
+
+                if (animTag[14]) {
+
+                    if (countTrapped < ResUtils.eyeTrapped.length) {
+                        mouth.setMouthImage(ResUtils.eyeTrapped[countTrapped]);
+                        countTrapped++;
+                        postDelayed(this, 120);
+                    } else {
+                        animTag[14] = false;
+                        countTrapped = 0;
+                    }
+
+                }
+            }
+        });
+
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mouth.setMouthImage(R.drawable.mouth0);
+            }
+        }, 3000);
     }
 }
