@@ -24,7 +24,7 @@ public class EmotionStatus {
             "anger",
             "surprise",
             "disgust",
-            "neutral"
+            "netral"
     };
     public static Map<String, Integer> qualEmo = new HashMap() {
         {
@@ -78,15 +78,15 @@ public class EmotionStatus {
             head_slopeY = false;
 
             int tar_headY = (int) (face.getHeadPose()[1] - faces.get(size - 2).getHeadPose()[1]);
-            if (Math.abs(tar_headY) > 20) {
+            if (Math.abs(tar_headY) > 13) {
                 head_slopeY = true;
                 heady_slope.add(tar_headY);
             }
             head_slopeN = false;
             int tar_head = (int) (face.getHeadPose()[2] - faces.get(size - 2).getHeadPose()[2]);
-            if (Math.abs(tar_head) > 20) {
+            if (Math.abs(tar_head) > 17) {
                 head_slopeN = true;
-                headn_slope.add(tar_headY);
+                headn_slope.add(tar_head);
             }
 
         }
@@ -154,5 +154,11 @@ public class EmotionStatus {
         return position;
     }
 
+    public static void cleanFace() {
+        faces.clear();
+        sineEye = false;
+        head_slopeY = false;
+        head_slopeN = false;
+    }
 
 }

@@ -3,23 +3,30 @@ package com.readface.cafe.anim;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.hardware.Camera;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.android.volley.VolleyError;
 import com.readface.cafe.Iinteface.TTSListenerCallback;
 import com.readface.cafe.Iinteface.TTSSpeakCallback;
+import com.readface.cafe.robot.Face;
+import com.readface.cafe.robot.Robot;
+import com.readface.cafe.utils.AnimHelper;
 import com.readface.cafe.utils.AppUrl;
 import com.readface.cafe.utils.CameraHelper;
 import com.readface.cafe.utils.EmotionStatus;
@@ -29,6 +36,7 @@ import com.readface.cafe.utils.StringUtil;
 import com.readface.cafe.utils.TTSHelper;
 import com.readface.cafe.utils.VolleyHelper;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,6 +51,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private String currEmo = EmotionStatus.emotion[0];
     private Context mContext;
 
+    private Robot mRobot;
     private Face face;
     private TextView tv_desc;
 
@@ -55,138 +64,181 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
     private long time_count = 0l;
 
-    private int count_speak_number = 0;
-
     private TTSHelper ttsHelper;
 
     private boolean isPlay = false;
+    boolean isTouch = false;
+    private int speakCount = 1;
+    private String new_person = "";
+
+    private JSONArray listForSpeak = null;
+    private int speakForListCount = 0;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        RelativeLayout parent = new RelativeLayout(this);
 
+        RelativeLayout parent = new RelativeLayout(this);
         int screenW = FaceUtil.getScreenWidth(this);
-        float radio = screenW / 1080f;
-        face = new Face(this, radio);
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(screenW, (int) (750 * radio));
-        layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
-        face.setLayoutParams(layoutParams);
-        face.setBackgroundColor(Color.WHITE);
+        int screenH = FaceUtil.getScreenHeight(this);
+        float radio = screenW / 640f;
+        int frameH = (int) (810 * radio);
+        mRobot = new Robot(this, radio);
+        RelativeLayout.LayoutParams robotLa = new RelativeLayout.LayoutParams(screenW, frameH);
+        robotLa.setMargins(0, (screenH - frameH) * 2 / 5, 0, 0);
+        mRobot.setLayoutParams(robotLa);
 
         mSurface = new SurfaceView(this);
         parent.addView(mSurface);
-        View v = new View(mContext);
-        v.setLayoutParams(new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
-        v.setBackgroundColor(Color.BLACK);
         tv_desc = new TextView(mContext);
         tv_desc.setTextSize(12);
 
+        VideoView v = new VideoView(mContext);
+        v.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
+        String uri = "android.resource://" + getPackageName() + "/" + R.raw.bg_v;
+        v.setVideoURI(Uri.parse(uri));
+        v.start();
+        View view = new View(mContext);
+        view.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
+        view.setBackgroundResource(R.mipmap.main_bg);
+        parent.addView(view);
         parent.addView(v);
-        parent.addView(face);
+        parent.addView(mRobot);
         parent.addView(tv_desc);
 
         time_count = System.currentTimeMillis();
         countDesc("启动，眨眼，激活设备");
 
+//        ListView list = new ListView(mContext);
+//        list.setAdapter(new ArrayAdapter<String>(this, R.layout.grid_item, new String[]{"眩晕", "安慰", "眨眼", "连续眨眼", "悲伤1",
+//                "悲伤2", "哭泣", "委屈", "鬼脸", "亲吻", "困", "笑1", "笑2", "笑3", "笑4", "怒1", "怒2", "惊讶"}));
+//        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//
+//                switch (position) {
+//                    case 0:
+//                        face.animGosh();
+//                        break;
+//                    case 1:
+//                        face.comfort();
+//                        break;
+//                    case 2:
+//                        face.eyeSine();
+//                        break;
+//                    case 3:
+//                        face.blink();
+//                        break;
+//                    case 4:
+//                        face.sad1();
+//                        break;
+//                    case 5:
+//                        face.sad2();
+//                        break;
+//                    case 6:
+//                        face.cry();
+//                        break;
+//                    case 7:
+//                        face.grievance();
+//                        break;
+//                    case 8:
+//                        face.grimace();
+//                        break;
+//                    case 9:
+//                        face.kiss();
+//                        break;
+//                    case 10:
+//                        face.trapped();
+//                        break;
+//                    case 11:
+//                        face.smile1();
+//                        break;
+//                    case 12:
+//                        face.smile2();
+//                        break;
+//                    case 13:
+//                        face.smile3();
+//                        break;
+//                    case 14:
+//                        face.smile4();
+//                        break;
+//                    case 15:
+//                        face.ang1();
+//                        break;
+//                    case 16:
+//                        face.ang2();
+//                        break;
+//                    case 17:
+//                        face.sub();
+//                        break;
+//                }
+//            }
+//        });
+//
+//        parent.addView(list);
         setContentView(parent);
 
-        ListView lv = new ListView(mContext);
-        lv.setSelector(new ColorDrawable(Color.TRANSPARENT));
-        lv.setDivider(new ColorDrawable(Color.TRANSPARENT));
-        parent.addView(lv);
-        lv.setAdapter(new ArrayAdapter<String>(mContext, R.layout.grid_item
-                , new String[]{"闭l眼", "睁l眼", "闭r眼", "睁r眼", "眼睛全部闭上", "眼睛全部睁开"
-                , "眩晕", "喜悦", "悲伤", "愤怒", "惊讶", "正常", "眨眼", "连续眨眼", "安慰", "委屈"
-                , "鬼脸", "开心初始", "悲伤1", "悲伤2", "大哭", "笑1", "笑2", "笑3", "笑4"}));
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        initActivate();
+        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+        face = mRobot.getFace();
+        mRobot.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0:
-                        face.animCloseLeftEye();
-                        break;
-                    case 1:
-                        face.animOpenLeftEye();
-                        break;
-                    case 2:
-                        face.animCloseRightEye();
-                        break;
-                    case 3:
-                        face.animOpenRightEye();
-                        break;
-                    case 4:
-                        face.closeAllEye();
-                        break;
-                    case 5:
-                        face.openAllEye();
-                        break;
-                    case 6:
-                        face.animGosh();
-                        break;
-                    case 7:
-                        face.emo0();
-                        break;
-                    case 8:
-                        face.emo1();
-                        break;
-                    case 9:
-                        face.emo3();
-                        break;
-                    case 10:
-                        face.emo4();
-                        break;
-                    case 11:
-                        face.emo6();
-                        break;
-                    case 12:
-                        face.eyeSine();
-                        break;
-                    case 13:
-                        face.blink1();
-                        break;
-                    case 14:
-                        face.comfort();
-                        break;
-                    case 15:
-                        face.grievance();
-                        break;
-                    case 16:
-                        face.grimace();
-                        break;
-                    case 17:
-                        face.happy_initial();
-                        break;
-                    case 18:
-                        face.sad1();
-                        break;
-                    case 19:
-                        face.sad2();
-                        break;
-                    case 20:
-                        face.cry();
-                        break;
-                    case 21:
-                        face.smile1();
-                        break;
-                    case 22:
-                        face.smile2();
-                        break;
-                    case 23:
-                        face.smile3();
-                        break;
-                    case 24:
-                        face.smile4();
-                        break;
+            public boolean onTouch(View v, MotionEvent event) {
 
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        if (!isTouch) {
+                            isTouch = true;
+                            if (listForSpeak != null && listForSpeak.length() == 3 && speakForListCount == 2) {
+                                ttsHelper.stopSpeak();
+                                JSONObject stopSpeak = new JSONObject();
+                                try {
+                                    stopSpeak.put("text", "哎呀，打断我干吗");
+                                    stopSpeak.put("speed", "70");
+                                    stopSpeak.put("touch", "0");
+                                    listForSpeak.put(1, stopSpeak);
+                                    speakForListCount = 1;
+                                    initSpeak();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        isTouch = false;
+                        break;
                 }
+                return true;
             }
         });
-//        initActivate();
-        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+
+
+        mHandler.sendEmptyMessageDelayed(3, FaceUtil.getRandom() * 1000);
+
+
     }
 
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void dispatchMessage(Message msg) {
+            switch (msg.what) {
+                case 1:
+                    statusChange((JSONObject) msg.obj);
+                    break;
+                case 2:
+                    initActivate();
+                    break;
+                case 3:
+                    if (getStatus() != StatusType.Play) {
+                        face.eyeSine();
+                    }
+                    mHandler.sendEmptyMessageDelayed(3, FaceUtil.getRandom() * 1000);
+                    break;
+            }
+        }
+    };
 
     private void countDesc(final String desc) {//描述输出
         runOnUiThread(new Runnable() {
@@ -225,111 +277,83 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     }
                     initFaceDetector();
                     ttsHelper = new TTSHelper(mContext);//开启音频服务
-                    //启动开场白
-//                    checkIsPerson();
                 }
             }
 
             @Override
             public void onError(VolleyError error) {
-                countDesc("获取token失败");
+                countDesc("获取token失败,重新获取中……");
+                Message msg = new Message();
+                msg.what = 2;
+                mHandler.sendMessageDelayed(msg, 3000);
             }
         });
     }
 
 
     private void initListener() {
-        if (ttsHelper.isListen()) return;
+        if (ttsHelper != null && ttsHelper.isListen()) return;
+        if (ttsHelper == null) return;
         ttsHelper.ImListener(new TTSListenerCallback() {
             @Override
-            public void callback(String response) {
+            public void callback(String response, String action) {
 
                 countDesc("监听结果--" + response);
+
                 StatusType MStatus = getStatus();
                 switch (MStatus) {
-                    case Nomal:
-                        //TODO 处理将录入的语音 接收下一步动作的指示
-                        getNext(response);
-                        break;
-                    case CreateNomal:
-                        response = getResources().getString(R.string.create_name);
                     case CreatePerson://认识这个人，，确定名字
-
-                        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().getId())
-                                , response
-                                , new VolleyHelper.HelpListener() {
-                            @Override
-                            public void onResponse(String s) {
-                                if (s != null) {
-                                    try {
-                                        countDesc("put for renew name success --" + s);
-                                        JSONObject result = new JSONObject(s);
-                                        String voice = result.getJSONObject("action").getString("voice");
-                                        initSpeak(voice);
-                                        BaseApplication.getIntence().setStatus(StatusType.Nomal);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onError(VolleyError error) {
-                                Log.d(TAG, "error log = " + error.getMessage());
-                                countDesc("put error");
-                                initSpeak("我没听懂，再说一次吧");
-                            }
-                        });
+                        upDateUse(response);
                         break;
-                    case Play:
-                        //TODO 处理将录入的语音 接收下一步动作的指示
-                        getNext(response);
+                    case PreCreate:
+                        getAskName(speakCount + "", response);
+                        break;
+                    default:
+                        getNext(response, "0", action);
                         break;
                 }
             }
 
             @Override
-            public void error() {
+            public void error(String action) {
                 countDesc("listen error ");
-                StatusType MStatus = getStatus();
-                switch (MStatus) {
-                    case CreatePerson:
-                        if (count_speak_number >= 1) {
-                            initSpeak(getResources().getString(R.string.create_nomal));
-                            BaseApplication.getIntence().setStatus(StatusType.CreateNomal);
-                            count_speak_number = 0;
-                        } else {
-                            initSpeak("我叫小白，你叫什么名字");
-                            count_speak_number++;
-                        }
-                        break;
-                    case CreateNomal:
-                        if (count_speak_number >= 1) {
-                            countDesc("关机");
-                            //TODO 关机
-                            initListener();
-                        } else {
-                            initSpeak("再没人说话我就关机了哦");
-                            count_speak_number++;
-                        }
-                        break;
-                    case Nomal:
-                        initListener();
-                        break;
-                    case Play:
-                        initListener();
-                        break;
-                    default:
-                        initListener();
-                        break;
+
+                if (getStatus() == StatusType.PreCreate) {
+                    getAskName(speakCount + "");
+                } else {
+                    getNext("", speakCount + "", action);
                 }
             }
         });
     }
 
-    public void initSpeak(String voice) {
-        if (ttsHelper.isSpeak()) return;
-        ttsHelper.ImSpeak(voice, new TTSSpeakCallback() {
+
+    public void initSpeak() {
+        if (ttsHelper != null && ttsHelper.isSpeak() && !isTouch) return;
+
+        if (ttsHelper == null) return;
+
+        String voice = null;
+        String speed = null;
+        String touch = null;
+        try {
+            if (speakForListCount >= listForSpeak.length()) {
+                speakForListCount = 0;
+                initListener();
+                listForSpeak = null;
+                return;
+            }
+            JSONObject current = listForSpeak.getJSONObject(speakForListCount);
+            voice = current.getString("text");
+            speed = current.getString("speed");
+            touch = current.getString("touch");
+
+            speakForListCount++;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        ttsHelper.ImSpeak(voice, speed, new TTSSpeakCallback() {
             @Override
             public void onStart() {
                 face.mouthStartSpeakAnim();
@@ -340,7 +364,14 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
             public void onComplete() {
                 face.mouthStopSpeakAnim();
                 countDesc("speak complete");
-                initListener();
+                if (StringUtil.isNotEmpty(new_person)) {
+                    speakForListCount = 0;
+                    BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
+                    upDateUse(new_person);
+                    new_person = null;
+                } else {
+                    initSpeak();
+                }
             }
         });
     }
@@ -350,11 +381,14 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     protected void onDestroy() {
         super.onDestroy();
         //退出时释放链接
-        if (ttsHelper != null)
+        if (ttsHelper != null) {
             ttsHelper.cancle();
-        if (mCameraHelper != null) {
+            ttsHelper = null;
+        }
+        if (mCameraHelper != null && mCameraHelper.isDetecting()) {
             mCameraHelper.stopDetection();
         }
+
     }
 
 
@@ -371,7 +405,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
                     countDesc("获取到人脸信息，发起检测");
                     hasPerson = "";
-                    ttsHelper.stopAll();//关闭音频服务
                     VolleyHelper.postFaceVerify(bytes, new VolleyHelper.HelpListener() {
                         @Override
                         public void onResponse(String s) {
@@ -379,21 +412,15 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                             try {
                                 JSONObject result = new JSONObject(s);
                                 BaseApplication.getIntence().setId(result.getJSONObject("person").getString("id"));
-                                String voice = result.getJSONObject("action").getString("voice");
-
-//                                if (result.getJSONObject("person").getBoolean("recognized")) {
-//                                    //1：熟悉的人
-//                                    countDesc("检测结果:--认识");
-//                                    face.eyeSine();
-//                                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
-//                                    initSpeak("要不要玩？");
-//                                } else {
-                                //2: 陌生人 创建人物
-                                countDesc("检测结果:--不认识");
-                                face.eyeSine();
-                                BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
-                                initSpeak("我是小白，你叫什么名字");
-//                                }
+                                listForSpeak = result.getJSONObject("action").getJSONArray("voice");
+                                if (result.getJSONObject("person").getBoolean("recognized")) {
+                                    countDesc("检测结果:--认识");
+                                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                                } else {
+                                    countDesc("检测结果:--不认识");
+                                    BaseApplication.getIntence().setStatus(StatusType.PreCreate);
+                                }
+                                initSpeak();
 
                             } catch (JSONException e) {
                                 e.printStackTrace();
@@ -408,6 +435,30 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 }
                 break;
             case Play://开始玩 表情跟随
+
+                if (face.animTag[16]) return;
+                if (EmotionStatus.resultHeadY()) {
+                    Log.d("TestActivity", "点头");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            face.kiss();
+                        }
+                    });
+                    return;
+                }
+                if (face.animTag[8]) return;
+                if (EmotionStatus.resultHeadN()) {
+                    Log.d("TestActivity", "摇头");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            face.animGosh();
+                        }
+                    });
+                    return;
+                }
+
                 if (EmotionStatus.resultEyeSine()) {
                     face.eyeSine();
                     Log.d("TestActivity", "眨眼");
@@ -459,8 +510,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
             hasPerson = hasPerson.substring(1, hasPerson.length());
         if (StringUtil.getCharCount(hasPerson, 'a') >= 18) {
             hasPerson = "";
-            face_success = true;
-            Log.d(TAG, "人脸检测失败");
+            EmotionStatus.cleanFace();
+            countDesc("人脸检测失败");
         }
     }
 
@@ -488,32 +539,30 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
 
-    void getNext(String voice) {
-        VolleyHelper.doGetNext(AppUrl.getNext(voice,
-                        BaseApplication.getIntence().getUser_emotion()),
+    void getNext(String voice, String count, String action) {
+        VolleyHelper.doGet(AppUrl.getNext(voice, count,
+                        BaseApplication.getIntence().getUser_emotion(), action),
                 new VolleyHelper.HelpListener() {
                     @Override
                     public void onResponse(String s) {
                         if (s != null) {
                             try {
-                                countDesc("next success---" + s);
+                                countDesc("next success---:" + s);
                                 JSONObject result = new JSONObject(s).getJSONObject("action");
-                                String voice = result.getString("voice");
                                 String anim = result.getString("emotion");
-                                String id = result.getString("behavior_id");
 
-                                if (StringUtil.isNotEmpty(anim)) {//3秒动画，开始下一步
-
+                                if (StringUtil.isNotEmpty(anim) && getStatus() != StatusType.Play) {//3秒动画，开始下一步
+                                    speakAnim(anim);
                                     Message msg = new Message();
-                                    msg.obj = new String[]{id, voice};
+                                    msg.obj = result;
                                     msg.what = 1;
                                     mHandler.sendMessageDelayed(msg, 3000);
                                 } else {
-                                    statusChange(id, voice);
+                                    statusChange(result);
                                 }
 
-
                             } catch (Exception e) {
+                                Log.d(TAG, e.getCause() + "");
                                 e.printStackTrace();
                             }
                         }
@@ -521,53 +570,177 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
                     @Override
                     public void onError(VolleyError error) {
-                        Log.d(TAG, "error log = " + error.getMessage());
-                        countDesc("next error");
-                        initSpeak("我没听懂，再说一次吧");
+                        initListener();
                     }
                 });
     }
 
-    void statusChange(String id, String voice) {
-        if (StringUtil.isEmpty(id)) {
-            BaseApplication.getIntence().setStatus(StatusType.Nomal);
-            initSpeak(voice);
-            return;
-        }
-        switch (id) {
-            case "3"://玩
-                if (!isPlay) {
-                    isPlay = true;
-                    initSpeak(voice);
-                    BaseApplication.getIntence().setStatus(StatusType.Play);
-                }
-                break;
-            case "2"://不玩
-                isPlay = false;
-                BaseApplication.getIntence().setStatus(StatusType.Nomal);
-            default:
-                initSpeak(voice);
-                break;
-        }
+    private void getAskName(String count) {
+        getAskName(count, "");
     }
 
-    private Handler mHandler = new Handler() {
-        @Override
-        public void dispatchMessage(Message msg) {
-            String[] arr = (String[]) msg.obj;
-            switch (msg.what) {
-                case 1:
-                    statusChange(arr[0], arr[1]);
+    private void getAskName(String count, String voice) {
+        VolleyHelper.doGet(AppUrl.getAsk(BaseApplication.getIntence().getId(), count, voice), new VolleyHelper.HelpListener() {
+            @Override
+            public void onResponse(String s) {
+                if (s != null) {
+                    try {
+                        countDesc("ask name success---:" + speakCount + ":" + s);
+                        JSONObject result = new JSONObject(s).getJSONObject("action");
+                        String respond_voice = null;
+                        if (result.has("respond_voice"))
+                            respond_voice = result.getString("respond_voice");
+
+                        if (StringUtil.isNotEmpty(respond_voice)) {
+                            speakCount = 1;
+                            new_person = respond_voice;
+                        } else {
+                            speakCount++;
+                        }
+                        listForSpeak = result.getJSONArray("voice");
+                        initSpeak();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                String errorCode = error.networkResponse.statusCode + "";
+                countDesc("ask error---" + errorCode);
+                initListener();
+            }
+        });
+    }
+
+    private void upDateUse(String response) {
+        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().getId())
+                , response
+                , new VolleyHelper.HelpListener() {
+            @Override
+            public void onResponse(String s) {
+                if (s != null) {
+                    try {
+                        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+
+                        countDesc("put for renew name success --" + s);
+                        JSONObject result = new JSONObject(s);
+                        listForSpeak = result.getJSONObject("action").getJSONArray("voice");
+                        initSpeak();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                countDesc("put error---" + error.networkResponse.statusCode);
+                initListener();
+            }
+        });
+    }
+
+    void statusChange(JSONObject result) {
+        try {
+            int id = result.getInt("behavior_id");
+            switch (id) {
+                case 3://玩
+                    if (!isPlay) {
+                        isPlay = true;
+                        listForSpeak = result.getJSONArray("voice");
+                        initSpeak();
+                        BaseApplication.getIntence().setStatus(StatusType.Play);
+                    } else {
+                        initListener();
+                    }
+                    break;
+                case 2://讲故事
+                    isPlay = false;
+                    face.emo6();
+                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                    listForSpeak = result.getJSONArray("voice");
+                    initSpeak();
+                    break;
+                case 0://正常
+                default://其他
+                    isPlay = false;
+                    face.emo6();
+                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                    listForSpeak = result.getJSONArray("voice");
+                    initSpeak();
                     break;
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    };
-
-    void speakAnim(String anim) {
-
     }
 
-    void stopAnim() {
 
+    void speakAnim(String anim) {
+        countDesc("表情--" + anim);
+        int position = -1;
+        try {
+            position = AnimHelper.getAnimPosition(anim);
+        } catch (Exception e) {
+
+        }
+        switch (position) {
+            case 0:
+                face.blink();
+                break;
+            case 1:
+                face.comfort();
+                break;
+            case 2:
+                face.grievance();
+                break;
+            case 3:
+                face.grimace();
+                break;
+            case 4:
+                face.happy_initial();
+                break;
+            case 5:
+                face.sad1();
+                break;
+            case 6:
+                face.sad2();
+                break;
+            case 7:
+                face.cry();
+                break;
+            case 8:
+                face.smile1();
+                break;
+            case 9:
+                face.smile2();
+                break;
+            case 10:
+                face.smile3();
+                break;
+            case 11:
+                face.smile4();
+                break;
+            case 12:
+                face.trapped();
+                break;
+            case 13:
+                face.kiss();
+                break;
+            case 14:
+                face.ang1();
+                break;
+            case 15:
+                face.ang2();
+                break;
+            case 16:
+                face.sub();
+                break;
+            default:
+                break;
+        }
     }
 }

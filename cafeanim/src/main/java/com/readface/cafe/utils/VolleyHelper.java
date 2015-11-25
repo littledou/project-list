@@ -45,6 +45,7 @@ public class VolleyHelper {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
                         listener.onError(error);
                     }
                 }
@@ -66,7 +67,7 @@ public class VolleyHelper {
      * @param url
      * @param listener
      */
-    public static void doGetNext(String url, final HelpListener listener) {
+    public static void doGet(String url, final HelpListener listener) {
         addRequest(new StringRequest(
                 url,
                 new Response.Listener<String>() {
@@ -78,6 +79,7 @@ public class VolleyHelper {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
                         listener.onError(error);
                     }
                 }) {
@@ -108,6 +110,7 @@ public class VolleyHelper {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
                         listener.onError(error);
                     }
                 }) {
@@ -130,7 +133,7 @@ public class VolleyHelper {
     /**
      * 创建人物
      */
-    public static void putUpdatePerson(String url , final String voice, final HelpListener listener) {
+    public static void putUpdatePerson(String url, final String voice, final HelpListener listener) {
         addRequest(new StringRequest(Request.Method.PUT,
                 url,
                 new Response.Listener<String>() {
@@ -142,10 +145,11 @@ public class VolleyHelper {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
                         listener.onError(error);
                     }
                 }
-        ){
+        ) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();

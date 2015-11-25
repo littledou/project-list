@@ -39,8 +39,8 @@ public class TTSHelper {
         initTTS();
     }
 
-    public void ImSpeak(String voice, final TTSSpeakCallback mCallback) {
-
+    public void ImSpeak(String voice, String thread, final TTSSpeakCallback mCallback) {
+        mTts.setParameter(SpeechConstant.SPEED, thread);//语速
         mTts.startSpeaking(voice, new SynthesizerListener() {
             @Override
             public void onSpeakBegin() {
@@ -81,11 +81,15 @@ public class TTSHelper {
         });
     }
 
+    private boolean shake = false;
+    private boolean nod = false;
+
     public void ImListener(final TTSListenerCallback mCallback) {
         mIat.startListening(new RecognizerListener() {
             @Override
             public void onVolumeChanged(int i, byte[] bytes) {
-
+                if (EmotionStatus.resultHeadY()) nod = true;
+                if (EmotionStatus.resultHeadN()) shake = true;
             }
 
             @Override
@@ -106,9 +110,14 @@ public class TTSHelper {
                     for (String key : mIatResults.keySet()) {
                         resultBuffer.append(mIatResults.get(key));
                     }
+                    String action = "";
+                    if (nod) action = "nod";
+                    if (shake) action = "shake";
+                    if (nod & shake) action = "";
+
                     String voice = resultBuffer.toString();
                     if (mCallback != null)
-                        mCallback.callback(voice);
+                        mCallback.callback(voice, action);
                 }
             }
 
@@ -116,14 +125,19 @@ public class TTSHelper {
             public void onError(SpeechError speechError) {
                 Log.d(TAG, speechError.toString());
                 if (!mTts.isSpeaking()) {
+                    String action = "";
+                    if (nod) action = "nod";
+                    if (shake) action = "shake";
+                    if (nod & shake) action = "";
                     if (mCallback != null)
-                        mCallback.error();
+                        mCallback.error(action);
                 }
             }
 
             @Override
             public void onEvent(int i, int i1, int i2, Bundle bundle) {
 
+                Log.d(TAG, "onEvent");
             }
         });
     }
@@ -177,9 +191,6 @@ public class TTSHelper {
                     mTts.setParameter(SpeechConstant.SPEED, "60");//语调
                     mTts.setParameter(SpeechConstant.VOLUME, "50");//音量
                     mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS, "true");
-                    Log.d(TAG, "初始化说成功");
-
-                    ImSpeak("嗨，我是小白", null);
                 } else {
                     Log.d(TAG, "初始化说失败：错误码" + code);
                 }
@@ -198,13 +209,11 @@ public class TTSHelper {
 
 
     public void cancle() {
+        stopAll();
         if (mIat != null) {
-            mIat.stopListening();
-            mIat.cancel();
             mIat.destroy();
         }
         if (mTts != null) {
-            mTts.stopSpeaking();
             mTts.destroy();
         }
     }
@@ -216,4 +225,11 @@ public class TTSHelper {
     public boolean isSpeak() {
         return mTts.isSpeaking();
     }
+
+    public void stopSpeak(){
+        if(mTts.isSpeaking()){
+            mTts.stopSpeaking();
+        }
+    }
+
 }

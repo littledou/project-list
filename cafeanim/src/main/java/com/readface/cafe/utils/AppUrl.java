@@ -15,13 +15,14 @@ public class AppUrl {
         return APPURL + "robots/activate";
     }
 
-    public static String getNext(String voice, String emotion) {
+    public static String getNext(String voice, String count, String emotion,String action) {
         try {
             voice = URLEncoder.encode(voice, "utf-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        return APPURL + "actions/next?person_voice=" + voice + "&person_id=1&person_emotion=" + emotion;
+        return APPURL + "actions/next?person_voice="
+                + voice + "&person_id=1&person_emotion=" + emotion + "&empty_count=" + count+"&person_action="+action;
     }
 
     public static String postFaceVerify() {
@@ -32,4 +33,15 @@ public class AppUrl {
     public static String putUpdatePerson(String id) {
         return APPURL + "people/" + id;
     }
+
+    public static String getAsk(String id, String empty_count,String voice) {
+        try {
+            voice = URLEncoder.encode(voice, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return APPURL + "people/" + id + "/ask_name?empty_count=" + empty_count+"&person_voice="+voice;
+
+    }
+
 }
