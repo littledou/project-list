@@ -1,16 +1,23 @@
 package com.readface.cafe.utils;
 
 import android.content.Context;
+import android.util.Base64;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.readface.cafe.anim.BaseApplication;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,15 +99,17 @@ public class VolleyHelper {
         });
     }
 
+
     /**
      * 确认身份
      *
      * @param image
      * @param listener
      */
-    public static void postFaceVerify(final byte[] image, final HelpListener listener) {
-        addRequest(new StringRequest(Request.Method.POST,
-                AppUrl.postFaceVerify(),
+    public static void postFaceVerify(String URL, final byte[] image, final HelpListener listener) {
+
+        StringRequest request = new StringRequest(Request.Method.POST,
+                URL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -117,17 +126,26 @@ public class VolleyHelper {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("person[image]", image.toString());
+                params.put("person[image]", "data:image/jpg;base64," + Base64.encodeToString(image, Base64.DEFAULT));
                 return params;
+            }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                return super.getBody();
             }
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
                 heads.put("token", BaseApplication.getIntence().getToken());
+
                 return heads;
             }
-        });
+        };
+        request.setRetryPolicy(new DefaultRetryPolicy(10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        addRequest(request);
     }
 
     /**

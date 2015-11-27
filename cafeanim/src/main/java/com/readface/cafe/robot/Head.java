@@ -1,7 +1,14 @@
 package com.readface.cafe.robot;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.RotateAnimation;
 
 /**
  * Created by mac on 15/11/23.
@@ -12,6 +19,7 @@ public class Head extends ViewGroup {
     private float radio = 1f;
     private Face mFace;
     private Angle mAngle;
+    boolean isAngle = false;
 
     public Head(Context context, float radio) {
         super(context);
@@ -21,6 +29,49 @@ public class Head extends ViewGroup {
         mFace = new Face(context, radio);
         addView(mAngle);
         addView(mFace);
+        mAngle.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                angleAnim();
+            }
+        });
+    }
+
+    private void angleAnim() {
+        isAngle = true;
+        Animation anim1 = new RotateAnimation(0, 30, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
+        final Animation anim2 = new RotateAnimation(30, -30, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
+        final Animation anim3 = new RotateAnimation(-30, 30, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
+        final Animation anim4 = new RotateAnimation(30, 0, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
+        anim1.setDuration(150);
+        anim2.setDuration(150);
+        anim3.setDuration(150);
+        anim4.setDuration(150);
+        anim1.setFillAfter(true);
+
+        mAngle.startAnimation(anim1);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mAngle.startAnimation(anim2);
+
+            }
+        }, 150);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mAngle.startAnimation(anim3);
+
+            }
+        }, 300);
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mAngle.startAnimation(anim4);
+
+            }
+        }, 450);
+
     }
 
     @Override

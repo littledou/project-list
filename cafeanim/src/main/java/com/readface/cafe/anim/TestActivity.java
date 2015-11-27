@@ -2,9 +2,7 @@ package com.readface.cafe.anim;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.hardware.Camera;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,18 +10,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import com.android.volley.VolleyError;
 import com.readface.cafe.Iinteface.TTSListenerCallback;
 import com.readface.cafe.Iinteface.TTSSpeakCallback;
+import com.readface.cafe.robot.AnimDrawable;
 import com.readface.cafe.robot.Face;
 import com.readface.cafe.robot.Robot;
 import com.readface.cafe.utils.AnimHelper;
@@ -74,6 +68,9 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private JSONArray listForSpeak = null;
     private int speakForListCount = 0;
 
+    private int isSendPicCount = 0;
+    private boolean isSendPic = false;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
@@ -82,30 +79,38 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         int screenW = FaceUtil.getScreenWidth(this);
         int screenH = FaceUtil.getScreenHeight(this);
         float radio = screenW / 640f;
-        int frameH = (int) (810 * radio);
-        mRobot = new Robot(this, radio);
-        RelativeLayout.LayoutParams robotLa = new RelativeLayout.LayoutParams(screenW, frameH);
-        robotLa.setMargins(0, (screenH - frameH) * 2 / 5, 0, 0);
-        mRobot.setLayoutParams(robotLa);
+        if (screenW > 1200) {
+            radio = 1080 / 640f;
+        }
+        int robotW = (int) (radio * 640f);
+        int robotH = (int) (radio * 810f);
 
+        mRobot = new Robot(this, radio);
+        RelativeLayout.LayoutParams robotLa = new RelativeLayout.LayoutParams(robotW, robotH);
+        robotLa.addRule(RelativeLayout.CENTER_IN_PARENT);
+        mRobot.setLayoutParams(robotLa);
         mSurface = new SurfaceView(this);
         parent.addView(mSurface);
         tv_desc = new TextView(mContext);
         tv_desc.setTextSize(12);
 
-        VideoView v = new VideoView(mContext);
-        v.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
-        String uri = "android.resource://" + getPackageName() + "/" + R.raw.bg_v;
-        v.setVideoURI(Uri.parse(uri));
-        v.start();
-        View view = new View(mContext);
+        ImageView view = new ImageView(mContext);
         view.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
-        view.setBackgroundResource(R.mipmap.main_bg);
+        view.setBackgroundResource(R.drawable.anim_main_bg);
+        AnimDrawable drawable = new AnimDrawable(this);
+        view.setImageDrawable(drawable);
+
+        ImageView view1 = new ImageView(mContext);
+        view1.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        view1.setImageResource(R.drawable.anim_e);
+        RelativeLayout.LayoutParams e_La = new RelativeLayout.LayoutParams(screenW, (int) (screenW * 327f / 640f));
+        e_La.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        view1.setLayoutParams(e_La);
         parent.addView(view);
-        parent.addView(v);
+        parent.addView(view1);
         parent.addView(mRobot);
         parent.addView(tv_desc);
-
+        drawable.start();
         time_count = System.currentTimeMillis();
         countDesc("启动，眨眼，激活设备");
 
@@ -353,6 +358,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
             e.printStackTrace();
         }
 
+        if (voice == null) voice = "";
         ttsHelper.ImSpeak(voice, speed, new TTSSpeakCallback() {
             @Override
             public void onStart() {
@@ -394,6 +400,28 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
     @Override
     public void onSuccess(YMFace ymFace, byte[] bytes, float v) {
+        if (isSendPic) {
+            isSendPic = false;
+            VolleyHelper.postFaceVerify(AppUrl.postForVerify(BaseApplication.getIntence().getId()), bytes, new VolleyHelper.HelpListener() {
+                @Override
+                public void onResponse(String response) {
+                    countDesc("volley uccess" + isSendPicCount);
+                    isSendPicCount++;
+                    isSendPic = true;
+                    if (isSendPicCount >= 3) {
+                        isSendPic = false;
+                        isSendPicCount = 0;
+                    }
+                }
+
+                @Override
+                public void onError(VolleyError error) {
+                    isSendPic = false;
+                    countDesc("volley error");
+                }
+            });
+        }
+
         EmotionStatus.addFace(ymFace);
         hasPerson += "b";
         switch (getStatus()) {
@@ -405,7 +433,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
                     countDesc("获取到人脸信息，发起检测");
                     hasPerson = "";
-                    VolleyHelper.postFaceVerify(bytes, new VolleyHelper.HelpListener() {
+                    VolleyHelper.postFaceVerify(AppUrl.postFaceVerify(), bytes, new VolleyHelper.HelpListener() {
                         @Override
                         public void onResponse(String s) {
                             countDesc(s);
@@ -419,6 +447,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                                 } else {
                                     countDesc("检测结果:--不认识");
                                     BaseApplication.getIntence().setStatus(StatusType.PreCreate);
+                                    isSendPic = true;
                                 }
                                 initSpeak();
 
@@ -464,9 +493,10 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     Log.d("TestActivity", "眨眼");
                 }
                 String emo = EmotionStatus.resultEmotion();
+
+                Log.d(TAG, "--情绪 = " + emo);
                 if (emo != null && !emo.equals(currEmo)) {
                     int position = EmotionStatus.qualEmo.get(emo);
-                    Log.d(TAG, position + "--情绪 = " + emo);
                     currEmo = emo;
                     switch (position) {
                         case 0:

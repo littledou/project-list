@@ -57,6 +57,8 @@ public class Face extends RelativeLayout {
     private int digress = 60;
     private boolean isCloseAllEye = false;
 
+    private boolean STOPALL = false;
+
     public Face(Context context, float radio) {
         super(context);
         this.mContext = context;
@@ -234,7 +236,7 @@ public class Face extends RelativeLayout {
     }
 
     private void animShockEye() {//眼睛颤动，，可怜样
-        if (animTag[3]) return;
+        if (animTag[3] || STOPALL) return;
         animTag[3] = true;
 
         post(new Runnable() {
@@ -252,7 +254,7 @@ public class Face extends RelativeLayout {
 
 
     public void animGosh() {
-        if (animTag[8]) return;
+        if (animTag[8] || STOPALL) return;
         cleanALlAction();
         animTag[8] = true;
         digress = 0;
@@ -303,7 +305,7 @@ public class Face extends RelativeLayout {
     }
 
     public void emo0() {//joy
-        if (animTag[0]) return;
+        if (animTag[0] || STOPALL) return;
         cleanALlAction();
         animTag[0] = true;
         count_emo = 0;
@@ -328,6 +330,7 @@ public class Face extends RelativeLayout {
 
 
     public void emo1() {//sad
+        if (STOPALL) return;
         cleanALlAction();
         animShockEye();
         mouth.setMouthImage(R.mipmap.mouth_sad2);
@@ -372,7 +375,7 @@ public class Face extends RelativeLayout {
 
 
     public void emo4() {//surp
-        if (animTag[2]) return;
+        if (animTag[2] || STOPALL) return;
         cleanALlAction();
         animTag[2] = true;
         count_emo = 0;
@@ -404,11 +407,13 @@ public class Face extends RelativeLayout {
     }
 
     public void emo6() {//nomal
+
+        if (STOPALL) return;
         cleanALlAction();
     }
 
 
-    //TODO cu
+    //TODO
     public void eyeSine() {
         //眩晕时不得眨眼
         if (animTag[9] || animTag[8]) return;
@@ -433,6 +438,7 @@ public class Face extends RelativeLayout {
     }
 
     public void mouthStartSpeakAnim() {//愤怒 不能说话
+        if (STOPALL) return;
         mouth.startSpeak(120, ResUtils.mouthSpeakNomal);
     }
 
@@ -444,6 +450,7 @@ public class Face extends RelativeLayout {
     private int blinkCount = 0;
 
     public void blink() {
+        if (STOPALL) return;
         if (animTag[11]) return;
         cleanALlAction();
         blinkCount = 0;
@@ -469,6 +476,7 @@ public class Face extends RelativeLayout {
     }
 
     public void comfort() {//安慰
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_smile4);
         brow.comfort();
         postDelayed(new Runnable() {
@@ -481,7 +489,7 @@ public class Face extends RelativeLayout {
     }
 
     public void grievance() {//委屈
-
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_sad1);
         brow.cry();
         animShockEye();
@@ -496,7 +504,7 @@ public class Face extends RelativeLayout {
     }
 
     public void grimace() {//鬼脸
-
+        if (STOPALL) return;
         brow.up();
         animTag[15] = true;
         countGrimace = 0;
@@ -529,6 +537,7 @@ public class Face extends RelativeLayout {
     }
 
     public void happy_initial() {//开心的初始状态
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_smile2);
         postDelayed(new Runnable() {
             @Override
@@ -539,6 +548,7 @@ public class Face extends RelativeLayout {
     }
 
     public void sad1() {
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_sad0);
         animShockEye();
         postDelayed(new Runnable() {
@@ -551,6 +561,7 @@ public class Face extends RelativeLayout {
     }
 
     public void sad2() {
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_sad2);
         animShockEye();
         brow.sad();
@@ -604,7 +615,7 @@ public class Face extends RelativeLayout {
     }
 
     public void smile1() {
-
+        if (STOPALL) return;
         animTag[13] = true;
         post(new Runnable() {
             @Override
@@ -635,6 +646,7 @@ public class Face extends RelativeLayout {
     }
 
     public void smile2() {
+        if (STOPALL) return;
         emo0();
         postDelayed(new Runnable() {
             @Override
@@ -645,6 +657,7 @@ public class Face extends RelativeLayout {
     }
 
     public void smile3() {
+        if (STOPALL) return;
         brow.smile3_2();
         mouth.setMouthImage(R.mipmap.mouth_smile2);
         postDelayed(new Runnable() {
@@ -657,6 +670,7 @@ public class Face extends RelativeLayout {
     }
 
     public void smile4() {
+        if (STOPALL) return;
         brow.cry();
         mouth.setMouthImage(R.mipmap.mouth_smile2);
         postDelayed(new Runnable() {
@@ -669,6 +683,7 @@ public class Face extends RelativeLayout {
     }
 
     public void trapped() {
+        if (STOPALL) return;
         mouth.setMouthImage(R.mipmap.mouth_sad1);
         animTag[14] = true;
         post(new Runnable() {
@@ -698,6 +713,7 @@ public class Face extends RelativeLayout {
     }
 
     public void kiss() {
+        if (STOPALL) return;
         if (animTag[16]) return;
         cleanALlAction();
         animTag[16] = true;
@@ -726,6 +742,7 @@ public class Face extends RelativeLayout {
     }
 
     public void ang1() {
+        if (STOPALL) return;
         if (animTag[1]) return;
         cleanALlAction();
         animTag[1] = true;
@@ -756,6 +773,7 @@ public class Face extends RelativeLayout {
     }
 
     public void ang2() {
+        if (STOPALL) return;
         if (animTag[1]) return;
         cleanALlAction();
         animTag[1] = true;
@@ -786,6 +804,7 @@ public class Face extends RelativeLayout {
     }
 
     public void sub() {
+        if (STOPALL) return;
         emo4();
         postDelayed(new Runnable() {
             @Override
@@ -793,5 +812,13 @@ public class Face extends RelativeLayout {
                 cleanALlAction();
             }
         }, EMOTIME);
+    }
+
+    public boolean isSTOPALL() {
+        return STOPALL;
+    }
+
+    public void setSTOPALL(boolean STOPALL) {
+        this.STOPALL = STOPALL;
     }
 }
