@@ -93,28 +93,28 @@ public class AnimDrawable extends Drawable implements Animatable {
 
 
         start[5].x = (int) (-145 * radio);
-        start[5].y = (int) (700 * radio);
+        start[5].y = screenH * 3 / 5;
 
-        off[5].x = (int) (740 * radio);
-        off[5].y = (int) (700 * radio);
+        off[5].x = screenW + 100;
+        off[5].y = screenH * 3 / 5;
 
         start[6].x = (int) (-80 * radio);
-        start[6].y = (int) (750 * radio);
+        start[6].y = screenH * 3 / 5 + 100;
 
         off[6].x = screenW + 100;
-        off[6].y = (int) (750 * radio);
+        off[6].y = screenH * 3 / 5 + 100;
 
-        start[7].x = (int) (640 * radio);
-        start[7].y = (int) (650 * radio);
+        start[7].x = screenW;
+        start[7].y = screenH * 3 / 5 - 100;
 
         off[7].x = (int) (-180 * radio);
-        off[7].y = (int) (650 * radio);
+        off[7].y = screenH * 3 / 5 - 100;
 
-        start[8].x = (int) (640 * radio);
-        start[8].y = (int) (740 * radio);
+        start[8].x = screenW;
+        start[8].y = screenH * 3 / 5 + 80;
 
         off[8].x = (int) (-90 * radio);
-        off[8].y = (int) (740 * radio);
+        off[8].y = screenH * 3 / 5 + 80;
 
         for (int i = 0; i < offset.length; i++) {
             offset[i].x = off[i].x - start[i].x;
@@ -232,7 +232,6 @@ public class AnimDrawable extends Drawable implements Animatable {
 
         @Override
         public void run() {
-            System.out.println("timeLine = " + timeLine);
             timeLine += 1;
             if (timeLine >= ANIMATION_DURATION) {
                 timeLine = 0;

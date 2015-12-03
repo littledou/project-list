@@ -8,7 +8,7 @@ import java.net.URLEncoder;
  */
 public class AppUrl {
 
-    private static String APPURL = "http://121.42.141.249:8087/v1/";
+    private static String APPURL = "http://121.42.141.249/v1/";
 
     //    private static String APPURL = "http://chatbot.readface.cn/v1/";
     public static String postActivate() {

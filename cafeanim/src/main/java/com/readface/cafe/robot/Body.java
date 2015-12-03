@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 
+import com.readface.cafe.utils.SoundUtils;
+
 
 /**
  * Created by mac on 15/11/23.
@@ -17,7 +19,7 @@ public class Body extends ViewGroup {
     private Arm armL, armR;
     private Tripe mTripe;
     private Light mLight;
-    boolean armLShock = false, armRShock = false;
+    private boolean armLShock = false, armRShock = false;
 
     public Body(Context context, float radio) {
         super(context);
@@ -39,6 +41,7 @@ public class Body extends ViewGroup {
         mLight.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundUtils.getIntense().playSound(7);
                 mLight.startFly();
             }
         });
@@ -46,19 +49,26 @@ public class Body extends ViewGroup {
         armL.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundUtils.getIntense().playSound(7);
 
                 initArmL();
-
-
             }
         });
         armR.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundUtils.getIntense().playSound(7);
                 initArmR();
             }
         });
 
+    }
+
+    void lightFly() {
+        mLight.startFly();
+    }
+    void stopLightFly(){
+        mLight.stopLightFly();
     }
 
     void initArmL() {

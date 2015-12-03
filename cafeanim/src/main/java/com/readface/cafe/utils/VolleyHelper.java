@@ -27,6 +27,7 @@ import java.util.Map;
 public class VolleyHelper {
 
     private static RequestQueue mQueue;
+    private static final String HOST = "televox_api.fashionyear.net";
 
     public static RequestQueue initQueue(Context mContext) {
         if (mQueue == null) {
@@ -57,16 +58,21 @@ public class VolleyHelper {
                     }
                 }
         ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> heads = new HashMap<String, String>();
+                heads.put("host", "HOST");
+                return heads;
+            }
 
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("robot[uuid]", FaceUtil.getDeviceId(BaseApplication.getIntence()));
+                params.put("robot[uuid]", FaceUtil.getDeviceId(BaseApplication.getInstence()));
                 return params;
             }
         });
     }
-
 
     /**
      * 请求下一步
@@ -93,7 +99,8 @@ public class VolleyHelper {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().getToken());
+                heads.put("host", "HOST");
+                heads.put("X-AUTH-TOKEN", BaseApplication.getInstence().getToken());
                 return heads;
             }
         });
@@ -126,25 +133,25 @@ public class VolleyHelper {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("person[image]", "data:image/jpg;base64," + Base64.encodeToString(image, Base64.DEFAULT));
-                return params;
-            }
+                if (image != null) {
+                    params.put("person[image]", "data:image/jpg;base64," + Base64.encodeToString(image, Base64.DEFAULT));
+                } else {
+                    params.put("person[image]", "");
 
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return super.getBody();
+                }
+                return params;
             }
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().getToken());
+                heads.put("host", "HOST");
+                heads.put("X-AUTH-TOKEN", BaseApplication.getInstence().getToken());
 
                 return heads;
             }
         };
-        request.setRetryPolicy(new DefaultRetryPolicy(10000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
         addRequest(request);
     }
 
@@ -179,13 +186,17 @@ public class VolleyHelper {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> heads = new HashMap<String, String>();
-                heads.put("token", BaseApplication.getIntence().getToken());
+                heads.put("host", "HOST");
+                heads.put("X-AUTH-TOKEN", BaseApplication.getInstence().getToken());
                 return heads;
             }
         });
     }
 
     private static void addRequest(Request<?> mRequest) {
+        mRequest.setRetryPolicy(new DefaultRetryPolicy(10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        mRequest.setTag(1);
         mQueue.add(mRequest);
     }
 
@@ -193,5 +204,9 @@ public class VolleyHelper {
         public void onResponse(String response);
 
         public void onError(VolleyError error);
+    }
+
+    public static void cancleAll() {
+        mQueue.cancelAll(1);
     }
 }

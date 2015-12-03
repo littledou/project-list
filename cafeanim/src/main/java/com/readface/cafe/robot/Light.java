@@ -15,8 +15,8 @@ import com.readface.cafe.anim.R;
  */
 public class Light extends View {
 
-    int defaultImage = R.mipmap.light;
-    int lightFly[] = {
+    private int defaultImage = R.mipmap.light;
+    private int lightFly[] = {
             R.drawable.light_fly1,
             R.drawable.light_fly2,
             R.drawable.light_fly3,
@@ -63,12 +63,16 @@ public class Light extends View {
                     postInvalidate();
                     count++;
                     if (count >= 40) {
-                        isFly = false;
                         count = 0;
                     }
                     postDelayed(this, 50);
                 }
             }
         });
+    }
+
+    void stopLightFly() {
+        isFly = false;
+        postInvalidate();
     }
 }

@@ -18,6 +18,8 @@ public class BaseApplication extends Application {
     private StatusType MStatus = StatusType.Nomal;
     private String id = "0";
     private static BaseApplication intence;
+    private AppPreferences appPreferences;
+
 
     @Override
     public void onCreate() {
@@ -25,9 +27,16 @@ public class BaseApplication extends Application {
         super.onCreate();
         VolleyHelper.initQueue(this);
         intence = this;
+        appPreferences = new AppPreferences(this);
     }
 
-    public static BaseApplication getIntence() {
+
+    public AppPreferences getAppPreferences() {
+        return appPreferences;
+    }
+
+
+    public static BaseApplication getInstence() {
         return intence;
     }
 

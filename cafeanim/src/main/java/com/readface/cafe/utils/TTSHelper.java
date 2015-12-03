@@ -118,6 +118,7 @@ public class TTSHelper {
                     String voice = resultBuffer.toString();
                     if (mCallback != null)
                         mCallback.callback(voice, action);
+                    mIatResults.clear();
                 }
             }
 
@@ -136,7 +137,6 @@ public class TTSHelper {
 
             @Override
             public void onEvent(int i, int i1, int i2, Bundle bundle) {
-
                 Log.d(TAG, "onEvent");
             }
         });
@@ -226,8 +226,8 @@ public class TTSHelper {
         return mTts.isSpeaking();
     }
 
-    public void stopSpeak(){
-        if(mTts.isSpeaking()){
+    public void stopSpeak() {
+        if (mTts.isSpeaking()) {
             mTts.stopSpeaking();
         }
     }

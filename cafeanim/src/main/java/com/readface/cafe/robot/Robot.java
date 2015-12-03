@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 
+import com.readface.cafe.utils.SoundUtils;
+
 /**
  * Created by mac on 15/11/23.
  */
@@ -34,12 +36,42 @@ public class Robot extends ViewGroup {
         mHead.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                SoundUtils.getIntense().playSound(7);
                 initHeadAnim();
             }
         });
     }
 
-    private void initHeadAnim() {
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        mHead.layout(0, 0, (int) (640 * radio), (int) (608 * radio));
+        mBody.layout(0, (int) (585 * radio), (int) (640 * radio), (int) (809 * radio));
+    }
+
+
+    public Face getFace() {
+        return mHead.getFace();
+    }
+
+    public void initLightAnim() {
+        mBody.lightFly();
+    }
+
+    public void stopLightAnim() {
+        mBody.stopLightFly();
+    }
+
+    public void initArmAnim() {
+        mBody.initArmR();
+        mBody.initArmL();
+    }
+
+    public void initAngleAnim() {
+        mHead.angleAnim();
+    }
+
+    public void initHeadAnim() {
         if (isHead) return;
         isHead = true;
         Animation anim1 = new RotateAnimation(0, 8, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.8f);
@@ -74,17 +106,6 @@ public class Robot extends ViewGroup {
                 isHead = false;
             }
         }, 800);
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        mHead.layout(0, 0, (int) (640 * radio), (int) (608 * radio));
-        mBody.layout(0, (int) (585 * radio), (int) (640 * radio), (int) (809 * radio));
-    }
-
-
-    public Face getFace() {
-        return mHead.getFace();
     }
 
 

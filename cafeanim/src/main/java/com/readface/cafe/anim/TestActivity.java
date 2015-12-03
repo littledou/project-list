@@ -1,8 +1,14 @@
 package com.readface.cafe.anim;
 
-import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.hardware.Camera;
+import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -13,6 +19,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.android.volley.VolleyError;
 import com.readface.cafe.Iinteface.TTSListenerCallback;
@@ -28,17 +36,19 @@ import com.readface.cafe.utils.FaceUtil;
 import com.readface.cafe.utils.StatusType;
 import com.readface.cafe.utils.StringUtil;
 import com.readface.cafe.utils.TTSHelper;
+import com.readface.cafe.utils.ToastUtils;
 import com.readface.cafe.utils.VolleyHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import mobile.AUDetection.YMDetector;
 import mobile.AUDetection.YMFace;
 
 
-public class TestActivity extends Activity implements YMDetector.DetectorListener, CameraHelper.ImageListener {
+public class TestActivity extends BaseActivity implements YMDetector.DetectorListener, CameraHelper.ImageListener {
 
     private final String TAG = "TestActivity";
 
@@ -54,13 +64,11 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private YMDetector ymDetector;
     private SurfaceView mSurface;
 
-    private String hasPerson = "";
-
-    private long time_count = 0l;
 
     private TTSHelper ttsHelper;
 
     private boolean isPlay = false;
+    private boolean isTTS = true;
     boolean isTouch = false;
     private int speakCount = 1;
     private String new_person = "";
@@ -70,18 +78,89 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
     private int isSendPicCount = 0;
     private boolean isSendPic = false;
+    RelativeLayout parent;
+
+    private int screenW, screenH;
+    private float radio;
+    View guide;
+
+    private boolean hasToast = false;
+
+    private long mBackTime = -1;
+    private final static long DIFF_DEFAULT_BACKTIME = 2000;
+
+    @Override
+    public void onBackPressed() {
+        long nowTime = System.currentTimeMillis();
+        long diff = nowTime - mBackTime;
+        if (diff > DIFF_DEFAULT_BACKTIME) {
+            mBackTime = nowTime;
+            ToastUtils.showShortToast("再按一次退出");
+        } else {
+            super.onBackPressed();
+        }
+    }
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-
-        RelativeLayout parent = new RelativeLayout(this);
-        int screenW = FaceUtil.getScreenWidth(this);
-        int screenH = FaceUtil.getScreenHeight(this);
-        float radio = screenW / 640f;
+        screenW = FaceUtil.getScreenWidth(this);
+        screenH = FaceUtil.getScreenHeight(this);
+        radio = screenW / 640f;
         if (screenW > 1200) {
             radio = 1080 / 640f;
         }
+        parent = new RelativeLayout(this);
+        setContentView(parent);
+        initVideo();
+    }
+
+    void initVideo() {
+        countDesc("init Video");
+        final VideoView vv = new VideoView(mContext);
+        vv.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
+        parent.addView(vv);
+        vv.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.lanch));
+        vv.start();
+        vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            public void onCompletion(MediaPlayer mp) {
+
+                AppPreferences appPreferences = BaseApplication.getInstence().getAppPreferences();
+                appPreferences.readLocalProperties(mContext);
+
+                if (StringUtil.isEmpty(appPreferences.isGuide)) {
+                    countDesc("video complete then add yes");
+                    hasToast = true;
+                    appPreferences.isGuide = "yes";
+                    appPreferences.saveInstance(mContext);
+                    ImageView start_bg = new ImageView(mContext);
+                    start_bg.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
+                    start_bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    start_bg.setImageResource(R.mipmap.lunch_bg);
+                    View yes = new View(mContext);
+                    RelativeLayout.LayoutParams yesl = new RelativeLayout.LayoutParams((int) (radio * 250), (int) (radio * 250));
+                    yesl.addRule(RelativeLayout.CENTER_HORIZONTAL);
+                    yesl.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+                    yesl.bottomMargin = 120;
+                    yes.setLayoutParams(yesl);
+                    parent.addView(start_bg);
+                    parent.addView(yes);
+                    yes.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            countDesc("video complete then add main");
+                            initMainView();
+                        }
+                    });
+                } else {
+                    initMainView();
+                }
+            }
+        });
+    }
+
+    void initMainView() {
+
         int robotW = (int) (radio * 640f);
         int robotH = (int) (radio * 810f);
 
@@ -89,8 +168,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         RelativeLayout.LayoutParams robotLa = new RelativeLayout.LayoutParams(robotW, robotH);
         robotLa.addRule(RelativeLayout.CENTER_IN_PARENT);
         mRobot.setLayoutParams(robotLa);
-        mSurface = new SurfaceView(this);
-        parent.addView(mSurface);
+
         tv_desc = new TextView(mContext);
         tv_desc.setTextSize(12);
 
@@ -106,85 +184,36 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         RelativeLayout.LayoutParams e_La = new RelativeLayout.LayoutParams(screenW, (int) (screenW * 327f / 640f));
         e_La.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         view1.setLayoutParams(e_La);
+
+        mSurface = new SurfaceView(this);
+
+        parent.addView(mSurface);
         parent.addView(view);
         parent.addView(view1);
+
         parent.addView(mRobot);
         parent.addView(tv_desc);
+        guide = new View(mContext);
+        RelativeLayout.LayoutParams guide_ = new RelativeLayout.LayoutParams((int) (156 * radio), (int) (48 * radio));
+        guide_.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        guide_.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        guide_.rightMargin = (int) (25 * radio);
+        guide_.bottomMargin = (int) (20 * radio);
+        guide.setLayoutParams(guide_);
+        guide.setBackgroundResource(R.mipmap.par_guide);
+        parent.addView(guide);
+
         drawable.start();
-        time_count = System.currentTimeMillis();
-        countDesc("启动，眨眼，激活设备");
 
-//        ListView list = new ListView(mContext);
-//        list.setAdapter(new ArrayAdapter<String>(this, R.layout.grid_item, new String[]{"眩晕", "安慰", "眨眼", "连续眨眼", "悲伤1",
-//                "悲伤2", "哭泣", "委屈", "鬼脸", "亲吻", "困", "笑1", "笑2", "笑3", "笑4", "怒1", "怒2", "惊讶"}));
-//        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//
-//                switch (position) {
-//                    case 0:
-//                        face.animGosh();
-//                        break;
-//                    case 1:
-//                        face.comfort();
-//                        break;
-//                    case 2:
-//                        face.eyeSine();
-//                        break;
-//                    case 3:
-//                        face.blink();
-//                        break;
-//                    case 4:
-//                        face.sad1();
-//                        break;
-//                    case 5:
-//                        face.sad2();
-//                        break;
-//                    case 6:
-//                        face.cry();
-//                        break;
-//                    case 7:
-//                        face.grievance();
-//                        break;
-//                    case 8:
-//                        face.grimace();
-//                        break;
-//                    case 9:
-//                        face.kiss();
-//                        break;
-//                    case 10:
-//                        face.trapped();
-//                        break;
-//                    case 11:
-//                        face.smile1();
-//                        break;
-//                    case 12:
-//                        face.smile2();
-//                        break;
-//                    case 13:
-//                        face.smile3();
-//                        break;
-//                    case 14:
-//                        face.smile4();
-//                        break;
-//                    case 15:
-//                        face.ang1();
-//                        break;
-//                    case 16:
-//                        face.ang2();
-//                        break;
-//                    case 17:
-//                        face.sub();
-//                        break;
-//                }
-//            }
-//        });
-//
-//        parent.addView(list);
-        setContentView(parent);
 
-        initActivate();
-        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+        guide.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent(mContext, GuideActivity.class), 1);
+            }
+        });
+        guide.setVisibility(View.GONE);
+        BaseApplication.getInstence().setStatus(StatusType.Nomal);
         face = mRobot.getFace();
         mRobot.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -219,9 +248,11 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         });
 
 
+        if (!isNetworkConnected(mContext)) {
+            mHandler.sendEmptyMessageDelayed(5, 2000);
+        }
         mHandler.sendEmptyMessageDelayed(3, FaceUtil.getRandom() * 1000);
-
-
+        initActivate();
     }
 
 
@@ -233,29 +264,52 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     statusChange((JSONObject) msg.obj);
                     break;
                 case 2:
-                    initActivate();
+                    if (isActivityRun)
+                        initActivate();
                     break;
                 case 3:
                     if (getStatus() != StatusType.Play) {
                         face.eyeSine();
+
+                        int ran = FaceUtil.getRandom();
+                        switch (ran) {
+                            case 5:
+                                mRobot.initHeadAnim();
+                            case 6:
+                        }
                     }
                     mHandler.sendEmptyMessageDelayed(3, FaceUtil.getRandom() * 1000);
+                    break;
+                case 4:
+                    if (face_success) {
+                        face_success = false;
+                        postVerify(null);
+                    }
+                    break;
+                case 5:
+                    if (!isNetworkConnected(mContext)) {
+                        countDesc("no net");
+                        final Dialog dialog = new Dialog(mContext, R.style.Dialog);
+                        ImageView dia = new ImageView(mContext);
+                        dia.setImageResource(R.mipmap.no_wifi);
+                        dia.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        dialog.setContentView(dia);
+                        dialog.setCanceledOnTouchOutside(true);
+                        dialog.show();
+                        dia.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.cancel();
+                            }
+                        });
+                    }
                     break;
             }
         }
     };
 
-    private void countDesc(final String desc) {//描述输出
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                tv_desc.setText(desc +
-                        "--time--" + (System.currentTimeMillis() - time_count) + "status = "
-                        + getStatus() + "\n" + tv_desc.getText().toString());
-                time_count = System.currentTimeMillis();
-            }
-        });
+    private void countDesc(String desc) {//描述输出
+        FaceUtil.d(desc + "---status: " + getStatus());
     }
 
     private void initFaceDetector() {
@@ -263,24 +317,43 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         mCameraHelper.startDetection(Camera.CameraInfo.CAMERA_FACING_FRONT);
         mCameraHelper.setImageListener(this);
         ymDetector = new YMDetector(mContext, this);
-        ymDetector.setLicensePath("readface_android_demo.license");
+        ymDetector.setLicensePath("robot_doudou.license");
+    }
+
+    public boolean isNetworkConnected(Context context) {
+        if (context != null) {
+            ConnectivityManager mConnectivityManager = (ConnectivityManager) context
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+            if (mNetworkInfo != null) {
+                return mNetworkInfo.isAvailable();
+            }
+        }
+        return false;
     }
 
     /**
      * 激活设备 获取token
      */
     private void initActivate() {
+
         VolleyHelper.doPostForToken(new VolleyHelper.HelpListener() {
             @Override
             public void onResponse(String s) {
                 if (s != null) {//设备激活成功
+                    parent.removeViewAt(0);//remove video
+                    if (hasToast) {//remove toast
+                        parent.removeViewAt(0);
+                        parent.removeViewAt(0);
+                    }
                     countDesc("设备激活成功,开启语音服务" + s);
                     try {
-                        BaseApplication.getIntence().setToken(new JSONObject(s).getString("token"));
+                        BaseApplication.getInstence().setToken(new JSONObject(s).getString("token"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                     initFaceDetector();
+                    mHandler.sendEmptyMessageDelayed(4, 5000);
                     ttsHelper = new TTSHelper(mContext);//开启音频服务
                 }
             }
@@ -299,12 +372,16 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     private void initListener() {
         if (ttsHelper != null && ttsHelper.isListen()) return;
         if (ttsHelper == null) return;
+        if (!isTTS)
+            return;
+        mRobot.initLightAnim();
         ttsHelper.ImListener(new TTSListenerCallback() {
             @Override
             public void callback(String response, String action) {
 
-                countDesc("监听结果--" + response);
-
+                mRobot.stopLightAnim();
+                EmotionStatus.cleanFace();
+                countDesc("监听结果--" + response + "--" + action);
                 StatusType MStatus = getStatus();
                 switch (MStatus) {
                     case CreatePerson://认识这个人，，确定名字
@@ -322,7 +399,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
             @Override
             public void error(String action) {
                 countDesc("listen error ");
-
+                EmotionStatus.cleanFace();
+                mRobot.stopLightAnim();
                 if (getStatus() == StatusType.PreCreate) {
                     getAskName(speakCount + "");
                 } else {
@@ -337,6 +415,8 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         if (ttsHelper != null && ttsHelper.isSpeak() && !isTouch) return;
 
         if (ttsHelper == null) return;
+        if (!isTTS)
+            return;
 
         String voice = null;
         String speed = null;
@@ -352,9 +432,9 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
             voice = current.getString("text");
             speed = current.getString("speed");
             touch = current.getString("touch");
-
             speakForListCount++;
         } catch (Exception e) {
+            speakForListCount++;
             e.printStackTrace();
         }
 
@@ -362,6 +442,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         ttsHelper.ImSpeak(voice, speed, new TTSSpeakCallback() {
             @Override
             public void onStart() {
+                mRobot.initArmAnim();
                 face.mouthStartSpeakAnim();
                 countDesc("speak start");
             }
@@ -372,7 +453,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 countDesc("speak complete");
                 if (StringUtil.isNotEmpty(new_person)) {
                     speakForListCount = 0;
-                    BaseApplication.getIntence().setStatus(StatusType.CreatePerson);
+                    BaseApplication.getInstence().setStatus(StatusType.CreatePerson);
                     upDateUse(new_person);
                     new_person = null;
                 } else {
@@ -382,33 +463,40 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
         });
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        countDesc("onPause");
+        isTTS = false;
+        if (ttsHelper != null)
+            ttsHelper.stopAll();
+        if (face != null) {
+            face.cleanALlAction();
+            face.mouthStopSpeakAnim();
+        }
+        if (mCameraHelper != null)
+            mCameraHelper.stopDetection();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //退出时释放链接
-        if (ttsHelper != null) {
-            ttsHelper.cancle();
-            ttsHelper = null;
-        }
-        if (mCameraHelper != null && mCameraHelper.isDetecting()) {
-            mCameraHelper.stopDetection();
-        }
-
+        VolleyHelper.cancleAll();
     }
 
 
     @Override
-    public void onSuccess(YMFace ymFace, byte[] bytes, float v) {
+    public void onSuccess(YMFace ymFace, byte[] bytes) {
         if (isSendPic) {
             isSendPic = false;
-            VolleyHelper.postFaceVerify(AppUrl.postForVerify(BaseApplication.getIntence().getId()), bytes, new VolleyHelper.HelpListener() {
+
+            VolleyHelper.postFaceVerify(AppUrl.postForVerify(BaseApplication.getInstence().getId()), bytes, new VolleyHelper.HelpListener() {
                 @Override
                 public void onResponse(String response) {
                     countDesc("volley uccess" + isSendPicCount);
                     isSendPicCount++;
                     isSendPic = true;
-                    if (isSendPicCount >= 3) {
+                    if (isSendPicCount >= 5) {
                         isSendPic = false;
                         isSendPicCount = 0;
                     }
@@ -420,51 +508,19 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     countDesc("volley error");
                 }
             });
+
+
         }
 
         EmotionStatus.addFace(ymFace);
-        hasPerson += "b";
         switch (getStatus()) {
             case Nomal:
-                if (hasPerson.length() > 20)
-                    hasPerson = hasPerson.substring(1, hasPerson.length());
-                if (face_success && StringUtil.getCharCount(hasPerson, 'b') >= 18) {
+                if (face_success) {
                     face_success = false;
-
-                    countDesc("获取到人脸信息，发起检测");
-                    hasPerson = "";
-                    VolleyHelper.postFaceVerify(AppUrl.postFaceVerify(), bytes, new VolleyHelper.HelpListener() {
-                        @Override
-                        public void onResponse(String s) {
-                            countDesc(s);
-                            try {
-                                JSONObject result = new JSONObject(s);
-                                BaseApplication.getIntence().setId(result.getJSONObject("person").getString("id"));
-                                listForSpeak = result.getJSONObject("action").getJSONArray("voice");
-                                if (result.getJSONObject("person").getBoolean("recognized")) {
-                                    countDesc("检测结果:--认识");
-                                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
-                                } else {
-                                    countDesc("检测结果:--不认识");
-                                    BaseApplication.getIntence().setStatus(StatusType.PreCreate);
-                                    isSendPic = true;
-                                }
-                                initSpeak();
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onError(VolleyError error) {
-                            countDesc("检测人脸失败");
-                        }
-                    });
+                    postVerify(bytes);
                 }
                 break;
             case Play://开始玩 表情跟随
-
                 if (face.animTag[16]) return;
                 if (EmotionStatus.resultHeadY()) {
                     Log.d("TestActivity", "点头");
@@ -492,57 +548,53 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                     face.eyeSine();
                     Log.d("TestActivity", "眨眼");
                 }
-                String emo = EmotionStatus.resultEmotion();
 
+                String emo = EmotionStatus.resultEmotion();
                 Log.d(TAG, "--情绪 = " + emo);
                 if (emo != null && !emo.equals(currEmo)) {
-                    int position = EmotionStatus.qualEmo.get(emo);
+                    final int position = EmotionStatus.qualEmo.get(emo);
                     currEmo = emo;
-                    switch (position) {
-                        case 0:
-                            face.emo0();
-                            break;
-                        case 1:
-                            face.emo1();
-                            break;
-                        case 2:
-                            face.emo2();
-                            break;
-                        case 3:
-                            face.emo3();
-                            break;
-                        case 4:
-                            face.emo4();
-                            break;
-                        case 5:
-                            face.emo5();
-                            break;
-                        case 6:
-                            face.emo6();
-                            break;
-                        default://表情优先
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            switch (position) {
+                                case 0:
+                                    face.emo0();
+                                    break;
+                                case 1:
+                                    face.emo1();
+                                    break;
+                                case 2:
+                                    face.emo2();
+                                    break;
+                                case 3:
+                                    face.emo3();
+                                    break;
+                                case 4:
+                                    face.emo4();
+                                    break;
+                                case 5:
+                                    face.emo5();
+                                    break;
+                                case 6:
+                                    face.emo6();
+                                    break;
+                                default://表情优先
 
-                            break;
-                    }
+                                    break;
+                            }
+                        }
+                    });
                 }
-
                 break;
             default:
-                hasPerson = "";
                 break;
         }
     }
 
     @Override
     public void onError() {
-        hasPerson += "a";
-        if (hasPerson.length() > 20)
-            hasPerson = hasPerson.substring(1, hasPerson.length());
-        if (StringUtil.getCharCount(hasPerson, 'a') >= 18) {
-            hasPerson = "";
-            EmotionStatus.cleanFace();
-            countDesc("人脸检测失败");
-        }
+
     }
 
     private boolean isDetector = false;
@@ -565,13 +617,47 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
     private StatusType getStatus() {
-        return BaseApplication.getIntence().getStatus();
+        return BaseApplication.getInstence().getStatus();
     }
 
 
+    void postVerify(byte[] bytes) {
+
+        countDesc("获取到人脸信息，发起检测");
+        VolleyHelper.postFaceVerify(AppUrl.postFaceVerify(), bytes, new VolleyHelper.HelpListener() {
+            @Override
+            public void onResponse(String s) {
+                guide.setVisibility(View.VISIBLE);
+                countDesc(s);
+                try {
+                    JSONObject result = new JSONObject(s);
+                    BaseApplication.getInstence().setId(result.getJSONObject("person").getString("id"));
+                    listForSpeak = result.getJSONObject("action").getJSONArray("voice");
+                    if (result.getJSONObject("person").getBoolean("recognized")) {
+                        countDesc("检测结果:--认识");
+                        BaseApplication.getInstence().setStatus(StatusType.Nomal);
+                    } else {
+                        countDesc("检测结果:--不认识");
+                        BaseApplication.getInstence().setStatus(StatusType.PreCreate);
+                        isSendPic = true;
+                    }
+                    initSpeak();
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                countDesc("检测人脸失败");
+            }
+        });
+    }
+
     void getNext(String voice, String count, String action) {
         VolleyHelper.doGet(AppUrl.getNext(voice, count,
-                        BaseApplication.getIntence().getUser_emotion(), action),
+                        BaseApplication.getInstence().getUser_emotion(), action),
                 new VolleyHelper.HelpListener() {
                     @Override
                     public void onResponse(String s) {
@@ -610,7 +696,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
     private void getAskName(String count, String voice) {
-        VolleyHelper.doGet(AppUrl.getAsk(BaseApplication.getIntence().getId(), count, voice), new VolleyHelper.HelpListener() {
+        VolleyHelper.doGet(AppUrl.getAsk(BaseApplication.getInstence().getId(), count, voice), new VolleyHelper.HelpListener() {
             @Override
             public void onResponse(String s) {
                 if (s != null) {
@@ -645,14 +731,14 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
     }
 
     private void upDateUse(String response) {
-        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getIntence().getId())
+        VolleyHelper.putUpdatePerson(AppUrl.putUpdatePerson(BaseApplication.getInstence().getId())
                 , response
                 , new VolleyHelper.HelpListener() {
             @Override
             public void onResponse(String s) {
                 if (s != null) {
                     try {
-                        BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                        BaseApplication.getInstence().setStatus(StatusType.Nomal);
 
                         countDesc("put for renew name success --" + s);
                         JSONObject result = new JSONObject(s);
@@ -666,7 +752,6 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
 
             @Override
             public void onError(VolleyError error) {
-                countDesc("put error---" + error.networkResponse.statusCode);
                 initListener();
             }
         });
@@ -681,7 +766,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                         isPlay = true;
                         listForSpeak = result.getJSONArray("voice");
                         initSpeak();
-                        BaseApplication.getIntence().setStatus(StatusType.Play);
+                        BaseApplication.getInstence().setStatus(StatusType.Play);
                     } else {
                         initListener();
                     }
@@ -689,7 +774,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 case 2://讲故事
                     isPlay = false;
                     face.emo6();
-                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                    BaseApplication.getInstence().setStatus(StatusType.Nomal);
                     listForSpeak = result.getJSONArray("voice");
                     initSpeak();
                     break;
@@ -697,7 +782,7 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 default://其他
                     isPlay = false;
                     face.emo6();
-                    BaseApplication.getIntence().setStatus(StatusType.Nomal);
+                    BaseApplication.getInstence().setStatus(StatusType.Nomal);
                     listForSpeak = result.getJSONArray("voice");
                     initSpeak();
                     break;
@@ -740,13 +825,13 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 face.sad2();
                 break;
             case 7:
-                face.cry();
+                face.cry(true);
                 break;
             case 8:
                 face.smile1();
                 break;
             case 9:
-                face.smile2();
+                face.smile2(true);
                 break;
             case 10:
                 face.smile3();
@@ -764,13 +849,27 @@ public class TestActivity extends Activity implements YMDetector.DetectorListene
                 face.ang1();
                 break;
             case 15:
-                face.ang2();
+                face.ang2(true);
                 break;
             case 16:
                 face.sub();
                 break;
             default:
                 break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            countDesc("onRestart");
+            isTTS = true;
+            speakForListCount = 0;
+            initListener();
+            if (mCameraHelper != null)
+                mCameraHelper.startDetection(Camera.CameraInfo.CAMERA_FACING_FRONT);
+            BaseApplication.getInstence().setStatus(StatusType.Nomal);
         }
     }
 }

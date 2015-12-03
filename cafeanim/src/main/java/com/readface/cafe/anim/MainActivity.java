@@ -42,7 +42,7 @@ public class MainActivity extends Activity implements YMDetector.DetectorListene
     }
 
     @Override
-    public void onSuccess(YMFace ymFace, byte[] bytes, float v) {
+    public void onSuccess(YMFace ymFace, byte[] bytes) {
 
     }
 

@@ -2,12 +2,14 @@ package com.readface.cafe.robot;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.media.SoundPool;
 import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 import com.readface.cafe.anim.R;
 import com.readface.cafe.utils.ResUtils;
+import com.readface.cafe.utils.SoundUtils;
 
 /**
  * Face 包括腮红1，眉毛1，眼睛1，嘴巴1
@@ -23,7 +25,8 @@ public class Face extends RelativeLayout {
     private final static int EMOTIME = 2000;
     /**
      * 0:喜悦表情
-     * 1:愤怒表情
+     * 1:愤怒表情1
+     * <p/>
      * 2:惊讶表情
      * 3:眼白移动
      * 4:左眼睛闭合
@@ -39,9 +42,11 @@ public class Face extends RelativeLayout {
      * 14: 困
      * 15: 鬼脸
      * 16: 亲吻
+     * 17: 悲伤表情
+     * 18: 愤怒表情2
      */
     public static boolean[] animTag;//长度就代表几种动画
-    private final int tag_count = 17;
+    private final int tag_count = 19;
     private int eye_shock_size = 2;
     private int eye_cry_size = 6;
 
@@ -257,6 +262,7 @@ public class Face extends RelativeLayout {
         if (animTag[8] || STOPALL) return;
         cleanALlAction();
         animTag[8] = true;
+        SoundUtils.getIntense().playSound(5);
         digress = 0;
         countMouthGosh = 0;
         brow.ang1();
@@ -291,6 +297,9 @@ public class Face extends RelativeLayout {
     }
 
     public void cleanALlAction() {//清除处理事件
+        for (int i = 0; i < animTag.length; i++) {
+            animTag[i] = false;
+        }
 
         brow.nomalSide();//眉毛恢复正常
         mouth.nomalSide();//嘴巴恢复正常
@@ -299,70 +308,33 @@ public class Face extends RelativeLayout {
         eye_goshl.setVisibility(View.INVISIBLE);
         eye_goshr.setVisibility(View.INVISIBLE);
         eye_cry.setVisibility(View.INVISIBLE);
-        for (int i = 0; i < animTag.length; i++) {
-            animTag[i] = false;
-        }
     }
 
     public void emo0() {//joy
-        if (animTag[0] || STOPALL) return;
-        cleanALlAction();
-        animTag[0] = true;
-        count_emo = 0;
-        post(new Runnable() {
-            @Override
-            public void run() {
-                if (animTag[0]) {//眉毛跳动，嘴巴跳动
-                    if (count_emo == 0) {
-                        count_emo = 1;
-                        brow.up();
-                        mouth.setMouthImage(R.mipmap.mouth_smile3);
-                    } else {
-                        count_emo = 0;
-                        brow.nomalSide();
-                        mouth.setMouthImage(R.mipmap.mouth_smile1);
-                    }
-                    postDelayed(this, 120);
-                }
-            }
-        });
+        if (animTag[0]) return;
+        SoundUtils.getIntense().playSound(0);
+        smile2(false);
+
     }
 
 
     public void emo1() {//sad
-        if (STOPALL) return;
+        SoundUtils.getIntense().playSound(1);
+        if (animTag[17] || STOPALL) return;
         cleanALlAction();
-        animShockEye();
-        mouth.setMouthImage(R.mipmap.mouth_sad2);
-        brow.sad();
-        sadCount = 0;
-        animTag[10] = true;
-        final View cry = new View(mContext);
-
-        cry.setLayoutParams(new RelativeLayout.LayoutParams((int) (640 * radio), (int) (211 * radio)));
-        cry.setY(0 * radio);
-
+        animTag[17] = true;
+        sad2();
         postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (animTag[10]) {
-                    if (getChildCount() == 4) {
-                        addView(cry);
-                        animTag[3] = false;
-                    }
-                    eye_cry_size = -eye_cry_size;
-                    eye.setEyeMove(eye_cry_size);
-                    eyeRight.setEyeMove(eye_cry_size);
+                if (animTag[17]) {
+                    SoundUtils.getIntense().playSound(2);
+                    cry(false);
 
-                    if (sadCount >= ResUtils.eyeSadLeft.length) sadCount = 0;
-                    cry.setBackgroundResource(ResUtils.eyeSadLeft[sadCount]);
-                    mouth.setMouthImage(R.mipmap.mouth_sad_cry1);
-                    if (sadCount % 2 == 1) mouth.setMouthImage(R.mipmap.mouth_sad_cry2);
-                    sadCount++;
-                    postDelayed(this, 160);
                 }
             }
         }, EMOTIME);
+
     }
 
     public void emo2() {//fear
@@ -371,12 +343,25 @@ public class Face extends RelativeLayout {
 
     public void emo3() {//anger
 
+        if (animTag[1] || STOPALL) return;
+        cleanALlAction();
+        animTag[1] = true;
+        ang1();
+        postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (animTag[1]) {
+                    ang2(false);
+                }
+            }
+        }, EMOTIME);
     }
 
 
     public void emo4() {//surp
         if (animTag[2] || STOPALL) return;
         cleanALlAction();
+        SoundUtils.getIntense().playSound(3);
         animTag[2] = true;
         count_emo = 0;
         brow.sub();
@@ -416,7 +401,9 @@ public class Face extends RelativeLayout {
     //TODO
     public void eyeSine() {
         //眩晕时不得眨眼
-        if (animTag[9] || animTag[8]) return;
+        for (int i = 0; i < animTag.length; i++) {
+            if (animTag[i]) return;
+        }
         animTag[9] = true;
         countEye = 0;
         post(new Runnable() {
@@ -506,6 +493,7 @@ public class Face extends RelativeLayout {
     public void grimace() {//鬼脸
         if (STOPALL) return;
         brow.up();
+        SoundUtils.getIntense().playSound(6);
         animTag[15] = true;
         countGrimace = 0;
         post(new Runnable() {
@@ -576,7 +564,7 @@ public class Face extends RelativeLayout {
         }, EMOTIME);
     }
 
-    public void cry() {
+    public void cry(boolean stop) {
         if (animTag[10]) return;
         cleanALlAction();
         mouth.setMouthImage(R.mipmap.mouth_sad_cry1);
@@ -602,16 +590,18 @@ public class Face extends RelativeLayout {
             }
         });
 
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                animTag[10] = false;
-                mouth.nomalSide();
-                brow.nomalSide();
-                cleanEye();
-                eye_cry.setVisibility(View.INVISIBLE);
-            }
-        }, EMOTIME);
+        if (stop) {
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    animTag[10] = false;
+                    mouth.nomalSide();
+                    brow.nomalSide();
+                    cleanEye();
+                    eye_cry.setVisibility(View.INVISIBLE);
+                }
+            }, EMOTIME);
+        }
     }
 
     public void smile1() {
@@ -645,15 +635,36 @@ public class Face extends RelativeLayout {
 
     }
 
-    public void smile2() {
-        if (STOPALL) return;
-        emo0();
-        postDelayed(new Runnable() {
+    public void smile2(boolean stop) {
+        if (animTag[0] || STOPALL) return;
+        cleanALlAction();
+        animTag[0] = true;
+        count_emo = 0;
+        post(new Runnable() {
             @Override
             public void run() {
-                cleanALlAction();
+                if (animTag[0]) {//眉毛跳动，嘴巴跳动
+                    if (count_emo == 0) {
+                        count_emo = 1;
+                        brow.up();
+                        mouth.setMouthImage(R.mipmap.mouth_smile3);
+                    } else {
+                        count_emo = 0;
+                        brow.nomalSide();
+                        mouth.setMouthImage(R.mipmap.mouth_smile1);
+                    }
+                    postDelayed(this, 120);
+                }
             }
-        }, EMOTIME);
+        });
+        if (stop) {
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    cleanALlAction();
+                }
+            }, EMOTIME);
+        }
     }
 
     public void smile3() {
@@ -717,6 +728,7 @@ public class Face extends RelativeLayout {
         if (animTag[16]) return;
         cleanALlAction();
         animTag[16] = true;
+        SoundUtils.getIntense().playSound(4);
         countKiss = 0;
         brow.kiss();
         eye.cry();
@@ -746,6 +758,7 @@ public class Face extends RelativeLayout {
         if (animTag[1]) return;
         cleanALlAction();
         animTag[1] = true;
+        SoundUtils.getIntense().playSound(8);
         animShockEye();
         count_emo = 0;
         mouth.setMouthImage(R.mipmap.mouth_ang);
@@ -772,11 +785,12 @@ public class Face extends RelativeLayout {
         }, EMOTIME);
     }
 
-    public void ang2() {
+    public void ang2(boolean stop) {
         if (STOPALL) return;
-        if (animTag[1]) return;
+        if (animTag[18]) return;
         cleanALlAction();
-        animTag[1] = true;
+        animTag[18] = true;
+        SoundUtils.getIntense().playSound(9);
         count_emo = 0;
         brow.ang2();
         mouth.setMouthImage(R.mipmap.mouth_ang);
@@ -784,7 +798,7 @@ public class Face extends RelativeLayout {
         post(new Runnable() {
             @Override
             public void run() {
-                if (animTag[1]) {
+                if (animTag[18]) {
 
                     if (count_emo >= ResUtils.eyeAngl.length) count_emo = 0;
                     eye.enAng(ResUtils.eyeAngl[count_emo]);
@@ -794,13 +808,14 @@ public class Face extends RelativeLayout {
                 }
             }
         });
-
-        postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                cleanALlAction();
-            }
-        }, EMOTIME);
+        if (stop) {
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    cleanALlAction();
+                }
+            }, EMOTIME);
+        }
     }
 
     public void sub() {

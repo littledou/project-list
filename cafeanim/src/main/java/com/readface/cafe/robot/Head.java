@@ -10,6 +10,8 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.RotateAnimation;
 
+import com.readface.cafe.utils.SoundUtils;
+
 /**
  * Created by mac on 15/11/23.
  */
@@ -20,6 +22,8 @@ public class Head extends ViewGroup {
     private Face mFace;
     private Angle mAngle;
     boolean isAngle = false;
+
+    private int count = 0;
 
     public Head(Context context, float radio) {
         super(context);
@@ -32,12 +36,27 @@ public class Head extends ViewGroup {
         mAngle.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                count++;
+                if (count >= 5) {
+                    mFace.ang2(true);
+                    count = 0;
+                }
+
+                SoundUtils.getIntense().playSound(7);
                 angleAnim();
+            }
+        });
+        post(new Runnable() {
+            @Override
+            public void run() {
+                count = 0;
+                postDelayed(this, 5000);
             }
         });
     }
 
-    private void angleAnim() {
+    public void angleAnim() {
+        if (isAngle) return;
         isAngle = true;
         Animation anim1 = new RotateAnimation(0, 30, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
         final Animation anim2 = new RotateAnimation(30, -30, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 1f);
@@ -68,6 +87,7 @@ public class Head extends ViewGroup {
             @Override
             public void run() {
                 mAngle.startAnimation(anim4);
+                isAngle = false;
 
             }
         }, 450);

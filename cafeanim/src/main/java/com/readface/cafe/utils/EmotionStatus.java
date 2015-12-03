@@ -66,27 +66,29 @@ public class EmotionStatus {
 
         int size = faces.size();
         if (size > 1) {
-            sineEye = false;
             int tar_eye_left = (int) (face.getFacialActions()[1] - faces.get(size - 2).getFacialActions()[1]);
             int tar_eye_right = (int) (face.getFacialActions()[0] - faces.get(size - 2).getFacialActions()[0]);
             if (Math.abs(tar_eye_right) >= 20 && Math.abs(tar_eye_left) >= 30) {
                 sineEye = true;
                 eye_right_slope.add(tar_eye_right);
                 eye_left_slope.add(tar_eye_left);
+            } else {
+                sineEye = false;
             }
-
-            head_slopeY = false;
 
             int tar_headY = (int) (face.getHeadPose()[1] - faces.get(size - 2).getHeadPose()[1]);
             if (Math.abs(tar_headY) > 13) {
                 head_slopeY = true;
                 heady_slope.add(tar_headY);
+            } else {
+                head_slopeY = false;
             }
-            head_slopeN = false;
             int tar_head = (int) (face.getHeadPose()[2] - faces.get(size - 2).getHeadPose()[2]);
             if (Math.abs(tar_head) > 17) {
                 head_slopeN = true;
                 headn_slope.add(tar_head);
+            } else {
+                head_slopeN = false;
             }
 
         }
@@ -155,7 +157,6 @@ public class EmotionStatus {
     }
 
     public static void cleanFace() {
-        faces.clear();
         sineEye = false;
         head_slopeY = false;
         head_slopeN = false;
