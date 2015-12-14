@@ -41,7 +41,6 @@ public class Head extends ViewGroup {
                     mFace.ang2(true);
                     count = 0;
                 }
-
                 SoundUtils.getIntense().playSound(7);
                 angleAnim();
             }

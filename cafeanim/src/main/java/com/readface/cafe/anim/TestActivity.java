@@ -3,7 +3,6 @@ package com.readface.cafe.anim;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.hardware.Camera;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
@@ -19,7 +18,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.android.volley.VolleyError;
@@ -57,8 +55,6 @@ public class TestActivity extends BaseActivity implements YMDetector.DetectorLis
 
     private Robot mRobot;
     private Face face;
-    private TextView tv_desc;
-
 
     private CameraHelper mCameraHelper;
     private YMDetector ymDetector;
@@ -169,9 +165,6 @@ public class TestActivity extends BaseActivity implements YMDetector.DetectorLis
         robotLa.addRule(RelativeLayout.CENTER_IN_PARENT);
         mRobot.setLayoutParams(robotLa);
 
-        tv_desc = new TextView(mContext);
-        tv_desc.setTextSize(12);
-
         ImageView view = new ImageView(mContext);
         view.setLayoutParams(new RelativeLayout.LayoutParams(screenW, screenH));
         view.setBackgroundResource(R.drawable.anim_main_bg);
@@ -187,13 +180,8 @@ public class TestActivity extends BaseActivity implements YMDetector.DetectorLis
 
         mSurface = new SurfaceView(this);
 
-        parent.addView(mSurface);
-        parent.addView(view);
-        parent.addView(view1);
-
-        parent.addView(mRobot);
-        parent.addView(tv_desc);
         guide = new View(mContext);
+        guide.setVisibility(View.GONE);
         RelativeLayout.LayoutParams guide_ = new RelativeLayout.LayoutParams((int) (156 * radio), (int) (48 * radio));
         guide_.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         guide_.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
@@ -201,10 +189,17 @@ public class TestActivity extends BaseActivity implements YMDetector.DetectorLis
         guide_.bottomMargin = (int) (20 * radio);
         guide.setLayoutParams(guide_);
         guide.setBackgroundResource(R.mipmap.par_guide);
+
+        parent.addView(mSurface);
+        parent.addView(view);
+        parent.addView(view1);
+        parent.addView(mRobot);
         parent.addView(guide);
 
-        drawable.start();
 
+        drawable.start();
+        BaseApplication.getInstence().setStatus(StatusType.Nomal);
+        face = mRobot.getFace();
 
         guide.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -212,9 +207,7 @@ public class TestActivity extends BaseActivity implements YMDetector.DetectorLis
                 startActivityForResult(new Intent(mContext, GuideActivity.class), 1);
             }
         });
-        guide.setVisibility(View.GONE);
-        BaseApplication.getInstence().setStatus(StatusType.Nomal);
-        face = mRobot.getFace();
+
         mRobot.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {

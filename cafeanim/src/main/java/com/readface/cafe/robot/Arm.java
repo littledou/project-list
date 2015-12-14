@@ -23,7 +23,6 @@ public class Arm extends View {
             setBackgroundResource(R.mipmap.arm_l);
         } else {
             setBackgroundResource(R.mipmap.arm_r);
-
         }
     }
 }

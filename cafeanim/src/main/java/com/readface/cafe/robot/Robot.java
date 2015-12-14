@@ -49,7 +49,6 @@ public class Robot extends ViewGroup {
         mBody.layout(0, (int) (585 * radio), (int) (640 * radio), (int) (809 * radio));
     }
 
-
     public Face getFace() {
         return mHead.getFace();
     }
@@ -109,4 +108,7 @@ public class Robot extends ViewGroup {
     }
 
 
+    public interface ClickCount {
+        void addCount(int headCount);
+    }
 }
