@@ -1,9 +1,11 @@
 package com.example.custom_demo;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,5 +34,10 @@ public class MainActivity extends Activity {
             });
             parent.addView(tv);
         }
+
+
+        ImageView iv = new ImageView(this);
+        parent.addView(iv, new ViewGroup.LayoutParams(1080, 1080));
+        iv.setImageResource(R.mipmap.image_t);
     }
 }
